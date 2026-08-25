@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>购物袋 · HYPE KIT</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<section class="section">
+  <div class="container">
+    <h2>我的购物袋</h2>
+    <div id="cart-body"></div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/shared.js"></script>
+<script>
+(async function(){
+await loadContent();
+mountChrome("");
+
+function render(){
+  const list = Cart.all();
+  const root = document.getElementById("cart-body");
+  if(!list.length){
+    root.innerHTML = `<div class="empty"><h3>购物袋是空的</h3><p style="margin-bottom:22px">去挑选一件球衣,或定制你的专属战袍。</p>
+      <a class="btn dark" href="shop.html">去逛逛</a></div>`;
+    return;
+  }
+  const items = list.map(it=>`
+    <div class="cart-item">
+      <div class="ci-thumb">${it.svg||""}</div>
+      <div class="ci-info">
+        <h4>${escapeHtml(it.title)}</h4>
+        <div class="m">${escapeHtml(it.meta||"")}</div>
+        <div class="qty" data-id="${it.id}">
+          <button data-op="-">−</button><span>${it.qty}</span><button data-op="+">+</button>
+        </div>
+      </div>
+      <div class="ci-right">
+        <div style="font-weight:600">¥${it.price*it.qty}</div>
+        <div class="rm" data-rm="${it.id}">移除</div>
+      </div>
+    </div>`).join("");
+  const total = Cart.total();
+  const ship = total>=499||total===0?0:20;
+  root.innerHTML = `<div class="cart-wrap">
+    <div>${items}</div>
+    <div class="summary">
+      <h3>订单摘要</h3>
+      <div class="sum-row"><span>商品小计</span><span>¥${total}</span></div>
+      <div class="sum-row"><span>配送费</span><span>${ship?"¥"+ship:"免运费"}</span></div>
+      <div class="sum-row total"><span>合计</span><span>¥${total+ship}</span></div>
+      <button class="btn dark block" style="margin-top:18px" id="checkout">结算</button>
+      <a class="btn block" style="margin-top:10px;border:1px solid #e5e5e5" href="shop.html">继续购物</a>
+    </div></div>`;
+
+  root.querySelectorAll(".qty").forEach(q=>{
+    q.addEventListener("click",e=>{
+      const op=e.target.dataset.op; if(!op)return;
+      const it=Cart.all().find(x=>x.id===q.dataset.id);
+      Cart.setQty(q.dataset.id, it.qty+(op==="+"?1:-1)); render();
+    });
+  });
+  root.querySelectorAll("[data-rm]").forEach(b=>b.addEventListener("click",()=>{Cart.remove(b.dataset.rm);render();}));
+  document.getElementById("checkout").addEventListener("click",()=>{
+    toast("下单成功!(演示环境,不产生真实交易)");
+    Cart.save([]); setTimeout(render,600);
+  });
+}
+render();
+})();
+</script>
+</body>
+</html>

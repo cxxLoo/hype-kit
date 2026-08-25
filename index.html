@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HYPE KIT · 球衣定制商城</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="stripes"></div>
+  <div class="container hero-content">
+    <div class="kicker" id="hero-kicker"></div>
+    <h1 id="hero-title"></h1>
+    <p id="hero-subtitle"></p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <a class="btn" href="customize.html">立即定制</a>
+      <a class="btn ghost" href="shop.html">浏览商城</a>
+    </div>
+  </div>
+</section>
+
+<!-- 分类 -->
+<section class="section" id="club">
+  <div class="container">
+    <h2>热门品类</h2>
+    <div class="cat-grid">
+      <a class="cat-card" href="shop.html">
+        <div class="bg c-home"></div>
+        <div class="lbl"><h3>主场球衣</h3><span class="go">选购 →</span></div>
+      </a>
+      <a class="cat-card" href="shop.html">
+        <div class="bg c-away"></div>
+        <div class="lbl"><h3>客场球衣</h3><span class="go">选购 →</span></div>
+      </a>
+      <a class="cat-card" href="shop.html#shoes">
+        <div class="bg c-shoe"></div>
+        <div class="lbl"><h3>足球战靴</h3><span class="go">选购 →</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- 定制引导 -->
+<section class="section" style="background:#f5f5f5">
+  <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center">
+    <div id="promo-preview" style="background:#fff;border-radius:12px;padding:30px;display:flex;justify-content:center"></div>
+    <div>
+      <div class="kicker" id="promo-kicker" style="color:#757575;letter-spacing:2px;font-weight:600"></div>
+      <h2 id="promo-title" style="margin:10px 0 16px"></h2>
+      <p id="promo-text" style="color:#757575;font-size:16px;margin-bottom:24px"></p>
+      <a class="btn dark" href="customize.html">开始定制 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- 精选商品 -->
+<section class="section">
+  <div class="container">
+    <h2>精选上新</h2>
+    <div class="prod-grid" id="featured"></div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/shared.js"></script>
+<script>
+(async function(){
+  await loadSiteData();
+  mountChrome("home");
+
+  // 文案（来自后台）
+  document.getElementById("hero-kicker").innerHTML = SITE.hero_kicker;
+  document.getElementById("hero-title").innerHTML = SITE.hero_title;
+  document.getElementById("hero-subtitle").innerHTML = SITE.hero_subtitle;
+  document.getElementById("promo-kicker").textContent = SITE.promo_kicker;
+  document.getElementById("promo-title").textContent = SITE.promo_title;
+  document.getElementById("promo-text").textContent = SITE.promo_text;
+
+  document.getElementById("promo-preview").innerHTML = jerseySVG(
+    {style:"stripe",primary:"#b1131a",secondary:"#0a2d5c",number:"10",name:"YOU",sponsor:"HYPE",textColor:"#fff"});
+
+  const feat = PRODUCTS.slice(0,4);
+  document.getElementById("featured").innerHTML = feat.map(p=>{
+    const media = productMedia(p);
+    return `<a class="card" href="customize.html?id=${p.id}">
+      <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}${media}</div>
+      <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
+      <div class="price">¥${p.price}</div></a>`;
+  }).join("");
+})();
+</script>
+</body>
+</html>

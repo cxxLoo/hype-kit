@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>专属定制 · HYPE KIT</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<section class="section">
+  <div class="container">
+    <div class="tabs" style="max-width:420px">
+      <div class="tab on" data-mode="jersey">定制球衣</div>
+      <div class="tab" data-mode="shoe">定制球鞋</div>
+    </div>
+
+    <div class="customizer">
+      <div class="stage"><div id="preview" style="width:100%;display:flex;justify-content:center"></div></div>
+
+      <div class="panel">
+        <h1 id="p-title">专属球衣定制</h1>
+        <div class="p-price" id="p-price">¥699</div>
+        <div class="p-note">一件起做 · 预计 5-7 个工作日发货</div>
+
+        <!-- 球衣面板 -->
+        <div id="panel-jersey">
+          <div class="field">
+            <label>版式</label>
+            <div class="sizes" id="j-style">
+              <div class="size on" data-v="stripe">竖条纹</div>
+              <div class="size" data-v="sash">斜纹</div>
+              <div class="size" data-v="solid">纯色</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>主色</label>
+            <div class="swatches" data-target="primary"></div>
+          </div>
+          <div class="field">
+            <label>副色 / 条纹色</label>
+            <div class="swatches" data-target="secondary"></div>
+          </div>
+          <div class="field">
+            <label>文字颜色</label>
+            <div class="swatches" data-target="textColor"></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="flex:1"><label>球员姓名</label>
+              <input class="txt-input" id="j-name" maxlength="12" value="YOU"></div>
+            <div class="field" style="width:110px"><label>号码</label>
+              <input class="txt-input" id="j-number" maxlength="2" value="10"></div>
+          </div>
+          <div class="field"><label>胸前广告文字</label>
+            <input class="txt-input" id="j-sponsor" maxlength="10" value="HYPE">
+            <div class="hint">留空则不显示广告。</div>
+          </div>
+          <div class="field"><label>尺码</label>
+            <div class="sizes" id="j-size">
+              <div class="size" data-v="S">S</div><div class="size on" data-v="M">M</div>
+              <div class="size" data-v="L">L</div><div class="size" data-v="XL">XL</div>
+              <div class="size" data-v="XXL">XXL</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 球鞋面板 -->
+        <div id="panel-shoe" style="display:none">
+          <div class="field"><label>鞋身颜色</label><div class="swatches" data-target="body"></div></div>
+          <div class="field"><label>鞋底颜色</label><div class="swatches" data-target="sole"></div></div>
+          <div class="field"><label>勾勾 / Logo 颜色</label><div class="swatches" data-target="swoosh"></div></div>
+          <div class="field"><label>鞋带颜色</label><div class="swatches" data-target="lace"></div></div>
+          <div class="field"><label>鞋侧刻字</label>
+            <input class="txt-input" id="s-name" maxlength="10" value="HYPE"></div>
+          <div class="field"><label>尺码</label>
+            <div class="sizes" id="s-size">
+              <div class="size" data-v="39">39</div><div class="size" data-v="40">40</div>
+              <div class="size on" data-v="41">41</div><div class="size" data-v="42">42</div>
+              <div class="size" data-v="43">43</div><div class="size" data-v="44">44</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <button class="btn dark block" id="add-cart">加入购物袋</button>
+          <button class="btn" style="border:1px solid #e5e5e5" id="rand">随机配色</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/shared.js"></script>
+<script>
+(async function(){
+await loadSiteData();
+mountChrome("custom");
+
+const PALETTE = ["#b1131a","#0a2d5c","#111111","#ffffff","#f5c518","#0a7a3f","#ff6a00","#1f6fe0","#c8ff00","#c9a24a","#e8467c","#f2f2f2"];
+let mode = "jersey";
+let J = {style:"stripe",primary:"#b1131a",secondary:"#0a2d5c",textColor:"#ffffff",name:"YOU",number:"10",sponsor:"HYPE",size:"M"};
+let S = {body:"#ffffff",sole:"#111111",swoosh:"#b1131a",lace:"#111111",name:"HYPE",size:"41"};
+const PRICE = {jersey:699, shoe:1299};
+
+// 预填色板
+function paintSwatches(){
+  document.querySelectorAll(".swatches").forEach(box=>{
+    const tgt = box.dataset.target;
+    const cur = (mode==="jersey"?J:S)[tgt];
+    box.innerHTML = PALETTE.map(c=>`<span class="sw ${c===cur?"on":""}" data-c="${c}" style="background:${c}"></span>`).join("");
+  });
+}
+
+function render(){
+  document.getElementById("preview").innerHTML = mode==="jersey"?jerseySVG(J):shoeSVG(S);
+  document.getElementById("p-title").textContent = mode==="jersey"?"专属球衣定制":"专属球鞋定制";
+  document.getElementById("p-price").textContent = "¥"+PRICE[mode];
+}
+
+// 版式/尺码点选
+function bindSizeGroup(id, key, obj){
+  document.getElementById(id)?.addEventListener("click",e=>{
+    const el=e.target.closest(".size"); if(!el)return;
+    el.parentElement.querySelectorAll(".size").forEach(x=>x.classList.remove("on"));
+    el.classList.add("on"); obj[key]=el.dataset.v; render();
+  });
+}
+bindSizeGroup("j-style","style",J);
+bindSizeGroup("j-size","size",J);
+bindSizeGroup("s-size","size",S);
+
+// 色板点选
+document.body.addEventListener("click",e=>{
+  const sw=e.target.closest(".sw"); if(!sw)return;
+  const tgt=sw.closest(".swatches").dataset.target;
+  (mode==="jersey"?J:S)[tgt]=sw.dataset.c;
+  sw.parentElement.querySelectorAll(".sw").forEach(x=>x.classList.remove("on"));
+  sw.classList.add("on"); render();
+});
+
+// 文本输入
+const bindText=(id,key,obj)=>document.getElementById(id)?.addEventListener("input",e=>{obj[key]=e.target.value;render();});
+bindText("j-name","name",J); bindText("j-number","number",J); bindText("j-sponsor","sponsor",J);
+bindText("s-name","name",S);
+
+// 切换球衣/球鞋
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); mode=t.dataset.mode;
+  document.getElementById("panel-jersey").style.display = mode==="jersey"?"":"none";
+  document.getElementById("panel-shoe").style.display = mode==="shoe"?"":"none";
+  paintSwatches(); render();
+}));
+
+// 随机配色
+document.getElementById("rand").addEventListener("click",()=>{
+  const rc=()=>PALETTE[Math.floor(Math.random()*PALETTE.length)];
+  if(mode==="jersey"){J.primary=rc();J.secondary=rc();J.textColor=Math.random()>.5?"#fff":"#111";}
+  else{S.body=rc();S.sole=rc();S.swoosh=rc();S.lace=rc();}
+  paintSwatches(); render();
+});
+
+// 加入购物袋
+document.getElementById("add-cart").addEventListener("click",()=>{
+  if(mode==="jersey"){
+    Cart.add({sku:"custom-jersey",title:"定制球衣 · "+(J.name||"无名")+" #"+(J.number||"0"),
+      price:PRICE.jersey,size:J.size,svg:jerseySVG(J),
+      meta:`版式:${({stripe:"竖条纹",sash:"斜纹",solid:"纯色"})[J.style]} · 尺码 ${J.size}`});
+  }else{
+    Cart.add({sku:"custom-shoe",title:"定制球鞋 · "+(S.name||"HYPE"),
+      price:PRICE.shoe,size:S.size,svg:shoeSVG(S),meta:`定制配色 · ${S.size}码`});
+  }
+  toast("定制款已加入购物袋!");
+});
+
+// 深链:从商城点定制带入预设
+(function(){
+  const id=new URLSearchParams(location.search).get("id");
+  if(!id)return;
+  const p=PRODUCTS.find(x=>x.id===id); if(!p)return;
+  if(p.cat==="jersey"){ mode="jersey"; Object.assign(J,p.opts); document.querySelector('.tab[data-mode="jersey"]').click();
+    document.getElementById("j-name").value=J.name; document.getElementById("j-number").value=J.number;
+    document.getElementById("j-sponsor").value=J.sponsor||"";
+    document.querySelectorAll("#j-style .size").forEach(x=>x.classList.toggle("on",x.dataset.v===J.style));
+  }else{ Object.assign(S,p.opts); document.querySelector('.tab[data-mode="shoe"]').click();
+    document.getElementById("s-name").value=S.name; }
+})();
+
+paintSwatches(); render();
+})();
+</script>
+</body>
+</html>

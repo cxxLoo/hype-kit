@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>管理员登录 · HYPE KIT</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login-card" id="login-form">
+    <div class="login-logo">
+      <svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg"><path d="M40 150 C60 60 200 -10 620 20 C300 60 180 120 120 150 C90 165 55 165 40 150 Z" fill="#fff"/></svg>
+    </div>
+    <h1>HYPE KIT 管理后台</h1>
+    <div class="sub">请使用管理员账号登录</div>
+    <div class="fld">
+      <label>邮箱</label>
+      <input type="email" id="email" autocomplete="username" required placeholder="admin@example.com">
+    </div>
+    <div class="fld">
+      <label>密码</label>
+      <input type="password" id="password" autocomplete="current-password" required placeholder="••••••••">
+    </div>
+    <button class="btn block" type="submit" id="submit">登录</button>
+    <div class="err" id="err"></div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/config.js"></script>
+<script>
+(async function(){
+  // 已登录则直接进后台
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ location.replace("index.html"); return; }
+
+  const form = document.getElementById("login-form");
+  const err = document.getElementById("err");
+  const btn = document.getElementById("submit");
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    err.textContent = "";
+    btn.disabled = true; btn.textContent = "登录中…";
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    btn.disabled = false; btn.textContent = "登录";
+    if(error){ err.textContent = "登录失败：" + error.message; return; }
+    location.replace("index.html");
+  });
+})();
+</script>
+</body>
+</html>
