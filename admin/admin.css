@@ -126,7 +126,7 @@ tbody tr:last-child td{border-bottom:none}
 .thumb svg,.thumb img{width:88%;height:88%;object-fit:contain}
 .pid{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--muted)}
 .pname{font-weight:600}
-.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#eef0f2;color:#555}
 .pill.cat{background:#eef2ff;color:#3b6fe0}
 .pill.cat.shoe{background:#f3eefc;color:#7c4fdb}
 .pill.tag{background:var(--brand-soft);color:var(--brand-ink)}

@@ -4,11 +4,16 @@
   const $ = (id)=>document.getElementById(id);
   let editingId = null;         // 正在编辑的商品 id；null 表示新增
   let currentImageUrl = "";     // 当前商品图片 URL
+  let meId = null;              // 当前登录管理员的用户 id
 
   /* ---------- 登录校验 ---------- */
   async function requireAuth(){
     const { data:{ session } } = await sb.auth.getSession();
     if(!session){ location.replace("login.html"); return null; }
+    // 必须是管理员
+    const { data:isAdmin } = await sb.rpc("is_admin");
+    if(isAdmin !== true){ await sb.auth.signOut(); location.replace("login.html"); return null; }
+    meId = session.user.id;
     const email = session.user.email || "admin";
     $("who").textContent = email;
     $("avatar").textContent = (email[0] || "A").toUpperCase();
@@ -24,7 +29,7 @@
   }
 
   /* ---------- 标签页切换 ---------- */
-  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders" };
+  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", accounts:"tab-accounts" };
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
@@ -32,6 +37,7 @@
     $("crumb").textContent = t.dataset.crumb || "";
     Object.keys(SECTIONS).forEach(key=>{ $(SECTIONS[key]).style.display = key===k ? "" : "none"; });
     if(k==="orders") loadOrders();
+    if(k==="accounts") loadAccounts();
   }));
 
   /* ---------- 退出 ---------- */
@@ -332,6 +338,50 @@
     $("order-mask").classList.remove("show");
     loadOrders();
   }
+
+  /* ================= 账号管理 ================= */
+  async function loadAccounts(){
+    const box = $("account-list");
+    const { data, error } = await sb.from("profiles")
+      .select("id,email,display_name,is_admin,created_at")
+      .order("created_at",{ascending:true});
+    if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
+    if(!data || !data.length){ box.innerHTML = `<div class="empty-state">暂无账号。</div>`; return; }
+    box.innerHTML = `<table><thead><tr>
+      <th>用户</th><th>邮箱</th><th>身份</th><th>注册时间</th><th>操作</th>
+    </tr></thead><tbody>${data.map(accRow).join("")}</tbody></table>`;
+    box.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>toggleAdmin(b.dataset.toggle, b.dataset.to==="1")));
+  }
+
+  function accRow(u){
+    const isMe = u.id===meId;
+    const badge = u.is_admin ? `<span class="pill tag">管理员</span>` : `<span class="pill">普通用户</span>`;
+    let action;
+    if(isMe){
+      action = `<span style="color:#8a93a6;font-size:13px">当前登录账号</span>`;
+    }else if(u.is_admin){
+      action = `<button class="btn danger sm" data-toggle="${u.id}" data-to="0">取消管理员</button>`;
+    }else{
+      action = `<button class="btn brand sm" data-toggle="${u.id}" data-to="1">设为管理员</button>`;
+    }
+    return `<tr>
+      <td class="pname">${escapeHtml(u.display_name||"—")}</td>
+      <td><span class="pid">${escapeHtml(u.email||"")}</span></td>
+      <td>${badge}</td>
+      <td style="color:#8a93a6">${u.created_at?new Date(u.created_at).toLocaleString():"—"}</td>
+      <td><div class="row-actions">${action}</div></td>
+    </tr>`;
+  }
+
+  async function toggleAdmin(id, makeAdmin){
+    if(!confirm(makeAdmin ? "确定授予该账号管理员权限？" : "确定取消该账号的管理员权限？")) return;
+    const { error } = await sb.from("profiles").update({ is_admin: makeAdmin }).eq("id", id);
+    if(error){ toast("操作失败：" + error.message); return; }
+    toast(makeAdmin ? "已设为管理员" : "已取消管理员");
+    loadAccounts();
+  }
+
+  $("refresh-accounts").addEventListener("click", loadAccounts);
 
   /* ================= 启动 ================= */
   (async function init(){

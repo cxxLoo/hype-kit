@@ -1,0 +1,71 @@
+/* ========== 账号登录/注册页（分屏，仿参考图） ========== */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Helvetica Neue",Helvetica,Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+.auth{display:flex;min-height:100vh;color:#1f2430}
+
+/* 左侧品牌区 */
+.auth-left{flex:1.1;position:relative;overflow:hidden;color:#fff;
+  background:radial-gradient(1200px 800px at 30% 40%,#3a2d78 0,#241b4d 45%,#160f30 100%)}
+.auth-left .brand{position:absolute;top:34px;left:40px;display:flex;align-items:center;gap:12px;z-index:2}
+.auth-left .brand .mk{width:40px;height:40px;border-radius:11px;background:#fff;display:flex;
+  align-items:center;justify-content:center}
+.auth-left .brand .mk svg{width:24px;height:24px}
+.auth-left .brand .tx b{display:block;font-size:18px;font-weight:800;letter-spacing:-.3px}
+.auth-left .brand .tx span{font-size:11px;letter-spacing:2px;color:#b9b2e6}
+.auth-left .glow{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.08)}
+.auth-left .g1{width:640px;height:640px;left:8%;top:18%;
+  box-shadow:0 0 160px 30px rgba(120,90,255,.25) inset}
+.auth-left .g2{width:900px;height:900px;left:-6%;top:6%;border-color:rgba(255,255,255,.05)}
+.auth-left .tagline{position:absolute;left:40px;bottom:48px;z-index:2;max-width:440px}
+.auth-left .tagline h2{font-size:30px;font-weight:800;line-height:1.25;margin-bottom:10px}
+.auth-left .tagline p{color:#c8c3e8;font-size:14px}
+
+/* 右侧表单区 */
+.auth-right{flex:1;display:flex;align-items:center;justify-content:center;background:#f4f5f9;padding:24px}
+.auth-card{background:#fff;border-radius:16px;padding:38px 40px;width:100%;max-width:400px;
+  box-shadow:0 10px 40px rgba(20,20,50,.08)}
+.auth-card h1{font-size:24px;font-weight:800;text-align:center;margin-bottom:24px}
+
+.afield{position:relative;margin-bottom:16px}
+.afield .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9aa0b0}
+.afield .ico svg{width:18px;height:18px;display:block}
+.afield input{width:100%;height:48px;border:1px solid #eceef3;background:#f6f7fa;border-radius:26px;
+  padding:0 44px;font-size:14px;outline:none;transition:.15s}
+.afield input:focus{border-color:#2f6dff;background:#fff;box-shadow:0 0 0 3px rgba(47,109,255,.12)}
+.afield .eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#9aa0b0}
+.afield .eye svg{width:18px;height:18px;display:block}
+
+.agree{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#6b7180;margin:6px 0 18px}
+.agree input{margin-top:2px}
+.agree a{color:#2f6dff}
+
+.abtn{width:100%;height:48px;border-radius:26px;background:#2f6dff;color:#fff;font-size:16px;
+  font-weight:600;letter-spacing:4px;transition:.15s}
+.abtn:hover{background:#245ae0}
+.abtn:disabled{opacity:.6;cursor:not-allowed}
+
+.alinks{display:flex;justify-content:center;gap:14px;margin-top:18px;font-size:14px;color:#2f6dff;font-weight:600}
+.alinks .sep{color:#d5d8e0}
+.alinks a{cursor:pointer}
+.aerr{color:#e0342b;font-size:13px;text-align:center;margin-top:14px;min-height:18px}
+.aok{color:#0f8a44;font-size:13px;text-align:center;margin-top:14px;min-height:18px}
+
+/* 已登录状态 */
+.logged{text-align:center}
+.logged .ava{width:64px;height:64px;border-radius:50%;background:#eef2ff;color:#2f6dff;font-size:28px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.logged h1{margin-bottom:4px}
+.logged .mail{color:#6b7180;font-size:14px;margin-bottom:6px}
+.logged .role{display:inline-block;background:#e9f8ef;color:#0f8a44;font-size:12px;font-weight:600;
+  padding:3px 12px;border-radius:20px;margin-bottom:22px}
+.logged .row{display:flex;flex-direction:column;gap:10px}
+.ghostbtn{width:100%;height:46px;border-radius:26px;border:1px solid #eceef3;background:#fff;font-weight:600;font-size:14px}
+.ghostbtn:hover{background:#f6f7fa}
+
+.backhome{position:absolute;top:30px;right:36px;color:#8a8fa3;font-size:13px;z-index:3}
+
+@media(max-width:820px){ .auth-left{display:none} }

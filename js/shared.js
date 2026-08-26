@@ -155,6 +155,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 7h12l-1 13H7L6 7z" stroke="#111" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="#111" stroke-width="2"/></svg>
             <span class="cart-count">0</span>
           </a>
+          <a class="nav-account" id="nav-account" href="account.html">登录/注册</a>
         </div>
       </div></div></div>`;
       const cur = nav.querySelector(`.menu a[data-k="${active}"]`);
@@ -174,5 +175,21 @@
       </div></footer>`;
     }
     updateBadge();
+    refreshAccount();
   };
+
+  async function refreshAccount(){
+    const el = document.getElementById("nav-account");
+    if(!el || !window.sb) return;
+    try{
+      const { data:{ session } } = await sb.auth.getSession();
+      const user = session && session.user;
+      if(user){
+        const name = (user.user_metadata && user.user_metadata.display_name) || user.email.split("@")[0];
+        el.textContent = "我的 · " + name;
+      }else{
+        el.textContent = "登录/注册";
+      }
+    }catch(e){}
+  }
 })();
