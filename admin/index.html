@@ -27,6 +27,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         <span>文案管理</span>
       </div>
+      <div class="tab" data-tab="orders" data-crumb="订单管理">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>
+        <span>订单管理</span>
+      </div>
     </nav>
     <div class="side-foot">
       <a class="btn ghost sm block" href="../index.html" target="_blank">查看网站 ↗</a>
@@ -79,6 +83,39 @@
             <button class="btn brand" id="save-content">保存文案</button>
           </div>
           <div id="content-fields"><div class="loading">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 订单管理 -->
+      <section id="tab-orders" style="display:none">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+            <div><div class="lbl">待发货</div><div class="num" id="stat-topay">–</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7M5.5 21a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM18.5 21a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg></div>
+            <div><div class="lbl">已发货</div><div class="num" id="stat-shipped">–</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+            <div><div class="lbl">累计订单</div><div class="num" id="stat-orders">–</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="bar">
+            <h2>订单列表</h2>
+            <div class="chips" id="ord-filter">
+              <button class="chip on" data-f="all">全部</button>
+              <button class="chip" data-f="pending_payment">待付款</button>
+              <button class="chip" data-f="paid">待发货</button>
+              <button class="chip" data-f="shipped">已发货</button>
+              <button class="chip" data-f="completed">已完成</button>
+              <button class="chip" data-f="cancelled">已取消</button>
+            </div>
+          </div>
+          <div id="order-list"><div class="loading">加载中…</div></div>
         </div>
       </section>
 
@@ -163,7 +200,16 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 订单详情弹窗 -->
+<div class="mask" id="order-mask">
+  <div class="modal">
+    <h3 id="om-title">订单详情</h3>
+    <div id="om-body"></div>
+    <div class="modal-actions" id="om-actions"></div>
+  </div>
+</div>
+
+<script src="../js/vendor/supabase.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/shared.js"></script>

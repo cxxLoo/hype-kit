@@ -154,6 +154,33 @@ tbody tr:last-child td{border-bottom:none}
 .loading{color:var(--muted);padding:34px 0;text-align:center;font-size:14px}
 .empty-state{text-align:center;padding:44px 0;color:var(--muted)}
 
+/* 订单筛选 chip */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:20px;border:1px solid var(--line);background:#fff;font-size:13px;
+  font-weight:600;color:#5b6273;cursor:pointer;transition:.12s}
+.chip:hover{background:#f6f7fa}
+.chip.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+
+/* 订单状态 pill */
+.pill.os-pending_payment{background:#fff3e0;color:#e07b00}
+.pill.os-paid{background:#e8eefc;color:#3b6fe0}
+.pill.os-shipped{background:var(--brand-soft);color:var(--brand-ink)}
+.pill.os-completed{background:#eef0f2;color:#555}
+.pill.os-cancelled{background:#fdecec;color:#e0342b}
+
+/* 订单详情弹窗 */
+.om-row{display:flex;gap:14px;padding:8px 0;font-size:14px;border-bottom:1px dashed var(--line)}
+.om-row span{color:var(--muted);width:64px;flex:none}
+.om-row b{font-weight:600}
+.om-item{display:flex;align-items:center;gap:12px;padding:8px 0}
+.om-thumb{width:46px;height:46px;border-radius:8px;background:#f4f6fa;flex:none;display:flex;
+  align-items:center;justify-content:center;overflow:hidden}
+.om-thumb svg,.om-thumb img{width:88%;height:88%;object-fit:contain}
+.om-track{flex:1;min-width:150px;border:1px solid var(--line);border-radius:9px;padding:9px 12px;
+  font-size:14px;outline:none}
+.om-track:focus{border-color:var(--brand)}
+#om-actions{flex-wrap:wrap;align-items:center}
+
 @media(max-width:880px){
   .sidebar{width:64px}
   .side-logo .txt,.side-nav .navlbl,.tab span{display:none}

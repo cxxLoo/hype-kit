@@ -24,13 +24,14 @@
   }
 
   /* ---------- 标签页切换 ---------- */
+  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders" };
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
     const k = t.dataset.tab;
     $("crumb").textContent = t.dataset.crumb || "";
-    $("tab-products").style.display = k==="products"?"":"none";
-    $("tab-content").style.display  = k==="content"?"":"none";
+    Object.keys(SECTIONS).forEach(key=>{ $(SECTIONS[key]).style.display = key===k ? "" : "none"; });
+    if(k==="orders") loadOrders();
   }));
 
   /* ---------- 退出 ---------- */
@@ -244,11 +245,100 @@
     toast("文案已保存，刷新前端即可看到");
   });
 
+  /* ================= 订单管理 ================= */
+  const OLABEL = window.ORDER_LABEL || {pending_payment:"待付款",paid:"待发货",shipped:"已发货",completed:"已完成",cancelled:"已取消"};
+  let orderFilter = "all";
+  let ordersCache = [];
+
+  document.querySelectorAll("#ord-filter .chip").forEach(c=>c.addEventListener("click",()=>{
+    document.querySelectorAll("#ord-filter .chip").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on"); orderFilter = c.dataset.f; renderOrders();
+  }));
+
+  async function loadOrders(){
+    const box = $("order-list");
+    const { data, error } = await sb.from("orders").select("*").order("created_at",{ascending:false});
+    if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
+    ordersCache = data || [];
+    $("stat-topay").textContent   = ordersCache.filter(o=>o.status==="paid").length;
+    $("stat-shipped").textContent = ordersCache.filter(o=>o.status==="shipped").length;
+    $("stat-orders").textContent  = ordersCache.length;
+    renderOrders();
+  }
+
+  function renderOrders(){
+    const box = $("order-list");
+    const list = orderFilter==="all" ? ordersCache : ordersCache.filter(o=>o.status===orderFilter);
+    if(!list.length){ box.innerHTML = `<div class="empty-state">暂无订单。</div>`; return; }
+    box.innerHTML = `<table><thead><tr>
+      <th>订单号</th><th>收货人</th><th>金额</th><th>状态</th><th>下单时间</th><th>操作</th>
+    </tr></thead><tbody>${list.map(orderRow).join("")}</tbody></table>`;
+    box.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>openOrder(b.dataset.view)));
+  }
+
+  function orderRow(o){
+    return `<tr>
+      <td><span class="pid">${escapeHtml(o.order_no)}</span></td>
+      <td>${escapeHtml(o.customer_name)}<div style="color:#8a93a6;font-size:12px">${escapeHtml(o.phone)}</div></td>
+      <td><span class="price">¥${o.total + o.ship_fee}</span></td>
+      <td><span class="pill os-${o.status}">${OLABEL[o.status]||o.status}</span></td>
+      <td style="color:#8a93a6">${new Date(o.created_at).toLocaleString()}</td>
+      <td><div class="row-actions"><button class="btn ghost sm" data-view="${o.id}">查看/处理</button></div></td>
+    </tr>`;
+  }
+
+  /* ---------- 订单详情 & 处理 ---------- */
+  function openOrder(id){
+    const o = ordersCache.find(x=>x.id===id); if(!o) return;
+    const items = (o.items||[]).map(it=>`
+      <div class="om-item">
+        <div class="om-thumb">${it.svg||""}</div>
+        <div style="flex:1"><div style="font-weight:600">${escapeHtml(it.title||"")}</div>
+          <div style="color:#8a93a6;font-size:12px">${escapeHtml(it.meta||"")} ${it.size?("· 尺码 "+escapeHtml(it.size)):""}</div></div>
+        <div>¥${it.price} × ${it.qty}</div>
+      </div>`).join("");
+    $("om-title").textContent = "订单 " + o.order_no;
+    $("om-body").innerHTML = `
+      <div class="om-row"><span>状态</span><b><span class="pill os-${o.status}">${OLABEL[o.status]}</span></b></div>
+      <div class="om-row"><span>收货人</span><b>${escapeHtml(o.customer_name)} ${escapeHtml(o.phone)}</b></div>
+      <div class="om-row"><span>地址</span><b>${escapeHtml(o.address)}</b></div>
+      ${o.remark?`<div class="om-row"><span>备注</span><b>${escapeHtml(o.remark)}</b></div>`:""}
+      <div class="section-sub">商品</div>${items}
+      <div class="om-row" style="margin-top:10px"><span>合计</span><b>¥${o.total + o.ship_fee}（含运费 ¥${o.ship_fee}）</b></div>
+      ${o.tracking_no?`<div class="om-row"><span>物流单号</span><b>${escapeHtml(o.tracking_no)}</b></div>`:""}
+    `;
+    const acts = [];
+    if(o.status==="pending_payment") acts.push(`<button class="btn" data-do="paid">确认收款</button>`);
+    if(o.status==="paid"){
+      acts.push(`<input id="om-track" class="om-track" placeholder="填写物流单号（可空）">`);
+      acts.push(`<button class="btn brand" data-do="shipped">确认发货</button>`);
+    }
+    if(o.status==="shipped") acts.push(`<button class="btn brand" data-do="completed">标记完成</button>`);
+    if(o.status==="pending_payment" || o.status==="paid") acts.push(`<button class="btn danger" data-do="cancelled">取消订单</button>`);
+    acts.push(`<button class="btn ghost" id="om-close">关闭</button>`);
+    $("om-actions").innerHTML = acts.join("");
+    $("om-actions").querySelectorAll("[data-do]").forEach(b=>b.addEventListener("click",()=>updateOrder(o.id, b.dataset.do)));
+    $("om-close").addEventListener("click",()=>$("order-mask").classList.remove("show"));
+    $("order-mask").classList.add("show");
+  }
+  $("order-mask").addEventListener("click",e=>{ if(e.target.id==="order-mask") $("order-mask").classList.remove("show"); });
+
+  async function updateOrder(id, newStatus){
+    const patch = { status:newStatus, updated_at:new Date().toISOString() };
+    if(newStatus==="shipped"){ const t=$("om-track"); if(t) patch.tracking_no = t.value.trim(); }
+    const { error } = await sb.from("orders").update(patch).eq("id", id);
+    if(error){ toast("操作失败：" + error.message); return; }
+    toast("已更新");
+    $("order-mask").classList.remove("show");
+    loadOrders();
+  }
+
   /* ================= 启动 ================= */
   (async function init(){
     const session = await requireAuth();
     if(!session) return;
     loadProductList();
     loadContentFields();
+    loadOrders();
   })();
 })();

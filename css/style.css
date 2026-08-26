@@ -150,6 +150,61 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
   font-size:14px;z-index:999;opacity:0;transform:translateY(-10px);transition:.25s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 
+/* ========== 结算弹窗 ========== */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;
+  justify-content:center;padding:48px 20px;z-index:200;overflow:auto}
+.modal-mask.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:26px;width:100%;max-width:440px}
+.modal-box h3{font-size:20px;font-weight:800;margin-bottom:18px}
+.mfield{margin-bottom:14px}
+.mfield label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.mfield input,.mfield textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 13px;
+  font-size:14px;outline:none;font-family:inherit}
+.mfield input:focus,.mfield textarea:focus{border-color:#111}
+.mfield textarea{min-height:64px;resize:vertical}
+.co-summary{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.co-err{color:var(--sale);font-size:13px;margin-top:10px;min-height:16px}
+.btn.sm{padding:9px 14px;font-size:13px}
+.btn.outline{background:#fff;border:1px solid var(--line);color:#111}
+.btn.outline:hover{background:#f5f5f5}
+
+/* ========== 订单卡片 ========== */
+.ord-card{border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:20px}
+.ord-card.is-new{border-color:#111;box-shadow:0 0 0 3px rgba(17,17,17,.06)}
+.ord-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.ord-head b{font-weight:700}
+.ord-time{color:var(--gray);font-size:13px;margin-left:12px}
+.status-badge{padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600}
+.s-pending_payment{background:#fff3e0;color:#e07b00}
+.s-paid{background:#e8eefc;color:#3b6fe0}
+.s-shipped{background:#e9f8ef;color:#0f8a44}
+.s-completed{background:#eef0f2;color:#555}
+.s-cancelled{background:#fdecec;color:#e0342b}
+.tl{display:flex;align-items:center;margin:6px 0 20px}
+.tl.cancelled{color:#e0342b;font-weight:600;font-size:14px}
+.tl-step{display:flex;align-items:center;color:#bbb;font-size:13px}
+.tl-step .dot{width:14px;height:14px;border-radius:50%;background:#ddd;display:inline-block}
+.tl-step.on{color:#0f8a44;font-weight:600}
+.tl-step.on .dot{background:#16a34a}
+.tl-step .lb{margin:0 8px}
+.tl-step .bar{width:44px;height:2px;background:#ddd}
+.tl-step .bar.on{background:#16a34a}
+.ord-items{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0}
+.ord-item{display:flex;align-items:center;gap:14px;padding:10px 0}
+.oi-thumb{width:60px;height:60px;background:#f5f5f5;border-radius:8px;flex:none;display:flex;
+  align-items:center;justify-content:center}
+.oi-thumb svg{width:82%;height:82%}
+.oi-info{flex:1}.oi-info h4{font-size:14px;font-weight:600}
+.oi-info .m{color:var(--gray);font-size:13px;margin-top:3px}
+.oi-right{font-size:14px;font-weight:600}
+.ord-track{margin-top:12px;font-size:14px;color:#333}
+.ord-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:14px}
+.ord-addr{font-size:14px;color:#333}.ord-addr span{color:var(--gray);font-size:13px}
+.ord-total{text-align:right}.ord-total b{font-size:18px}.ord-total span{color:var(--gray);font-size:12px;margin-left:4px}
+.ord-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;align-items:center;flex-wrap:wrap}
+.ord-actions .wait{color:var(--gray);font-size:13px;margin-right:auto}
+
 @media(max-width:1080px){
   .prod-grid{grid-template-columns:repeat(2,1fr)}
   .cat-grid{grid-template-columns:1fr}

@@ -105,6 +105,19 @@
   }
   window.updateCartBadge = updateBadge;
 
+  /* ---------- 订单：状态定义 + 本地凭证 ---------- */
+  window.ORDER_FLOW  = ["pending_payment","paid","shipped","completed"];
+  window.ORDER_LABEL = {
+    pending_payment:"待付款", paid:"待发货", shipped:"已发货",
+    completed:"已完成", cancelled:"已取消"
+  };
+  // 记录本机下过的订单 token，用于「我的订单」查询
+  window.MyOrders = {
+    KEY:"hk_order_tokens_v1",
+    tokens(){ try{ return JSON.parse(localStorage.getItem(this.KEY)) || []; }catch(e){ return []; } },
+    add(t){ const l=this.tokens(); if(t && !l.includes(t)){ l.unshift(t); localStorage.setItem(this.KEY, JSON.stringify(l)); } }
+  };
+
   /* ---------- Toast ---------- */
   window.toast = function(msg){
     let t = document.querySelector(".toast");
@@ -130,6 +143,7 @@
           <a href="shop.html" data-k="shop">球衣商城</a>
           <a href="shop.html#shoes" data-k="shop">球鞋</a>
           <a href="customize.html" data-k="custom">专属定制</a>
+          <a href="orders.html" data-k="orders">我的订单</a>
           <a href="index.html#club">俱乐部</a>
         </div>
         <div class="nav-right">
