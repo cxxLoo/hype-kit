@@ -14,3 +14,12 @@ window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_AN
 
 // 上传图片用的 Storage 桶名（需在 Supabase 里创建，见部署教程）
 window.SB_BUCKET = "assets";
+
+/* ===== 预留：生成式 AI 试穿接口（第二期）=====
+ * 留空 = 使用前端合成试穿（默认，零成本）。
+ * 接入真·AI 试穿时：部署一个 Supabase Edge Function 代理第三方 AI 模型（把 API Key 藏在函数里），
+ * 然后把它的 URL 填到这里即可自动启用，例如：
+ *   window.AI_TRYON_ENDPOINT = "https://<项目>.functions.supabase.co/ai-tryon";
+ * 该函数约定：POST { photo, product } → 返回 { image: "<结果图 dataURL 或 https 链接>" }
+ */
+window.AI_TRYON_ENDPOINT = "";
