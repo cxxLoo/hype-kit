@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>管理后台 · HYPE KIT</title>
-<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="admin.css?v=20260828">
 </head>
 <body>
@@ -71,11 +71,11 @@
           </div>
           <div class="stat-card">
             <div class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-            <div><div class="lbl">球衣数量</div><div class="num" id="stat-jersey">–</div></div>
+            <div><div class="lbl">服装数量</div><div class="num" id="stat-jersey">–</div></div>
           </div>
           <div class="stat-card">
             <div class="ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16h20M4 16l2-8h9l5 5v3"/></svg></div>
-            <div><div class="lbl">球鞋数量</div><div class="num" id="stat-shoe">–</div></div>
+            <div><div class="lbl">鞋帽数量</div><div class="num" id="stat-shoe">–</div></div>
           </div>
         </div>
 
@@ -226,6 +226,8 @@
       <div class="fld">
         <label>分类</label>
         <select id="f-cat">
+          <option value="clothing">服装 clothing</option>
+          <option value="footwear">鞋帽 footwear</option>
           <option value="jersey">球衣 jersey</option>
           <option value="shoe">球鞋 shoe</option>
         </select>
@@ -239,6 +241,20 @@
       <div class="fld"><label>标签（可空，如 新品/限量）</label><input id="f-tag"></div>
     </div>
     <div class="fld"><label>排序（数字越小越靠前）</label><input id="f-sort" type="number" value="100"></div>
+
+    <!-- 服装 / 鞋帽 选项 -->
+    <div id="opts-fashion">
+      <div class="section-sub">服装 / 鞋帽属性</div>
+      <div class="grid2">
+        <div class="fld"><label>性别</label>
+          <select id="x-gender"><option value="men">男装</option><option value="women">女装</option><option value="unisex">中性 / 通用</option></select>
+        </div>
+        <div class="fld"><label>品类</label>
+          <select id="x-kind"><option value="jeans">牛仔裤</option><option value="top">上衣</option><option value="shoe">鞋子</option><option value="hat">帽子</option></select>
+        </div>
+      </div>
+      <div class="hint">服装/鞋帽以「真实商品图片」展示，请在下方上传图片。牛仔裤/上衣选性别；鞋子/帽子可选中性。</div>
+    </div>
 
     <!-- 球衣配色 -->
     <div id="opts-jersey">

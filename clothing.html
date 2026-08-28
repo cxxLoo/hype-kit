@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>服装商城 · HYPE KIT</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css?v=20260828">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<!-- 品牌大图 Banner -->
+<section class="mall-hero mh-denim">
+  <div class="mh-inner">
+    <div class="mh-kicker">2026 DENIM EDIT · 全球时尚</div>
+    <h1 class="mh-title">服装商城<br>牛仔的一百种态度</h1>
+    <p class="mh-sub">从经典直筒到复古阔腿，从基础白 T 到落肩卫衣。精选优质面料与版型，男装女装一站搭齐，穿出属于你的街头态度。</p>
+    <div class="mh-cta">
+      <a class="btn" href="#grid">立即选购</a>
+      <a class="btn ghost" href="footwear.html">搭配鞋帽 →</a>
+    </div>
+    <div class="mh-badge">
+      <span>👖 男装 / 女装</span>
+      <span>🧵 优质面料</span>
+      <span>♻️ 30 天无忧退换</span>
+      <span>🚚 满 ¥499 包邮</span>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="grid">
+  <div class="container">
+    <div class="mall-filterbar">
+      <div class="fgroup"><span class="flabel">性别</span>
+        <div class="chipbar" id="g-filter">
+          <button data-g="all" class="on">全部</button>
+          <button data-g="men">男装</button>
+          <button data-g="women">女装</button>
+        </div>
+      </div>
+      <div class="fgroup"><span class="flabel">品类</span>
+        <div class="chipbar" id="k-filter">
+          <button data-k="all" class="on">全部</button>
+          <button data-k="jeans">牛仔裤</button>
+          <button data-k="top">上衣</button>
+        </div>
+      </div>
+    </div>
+    <div class="mall-toolbar">
+      <div class="mall-count">共 <b id="count">0</b> 件单品</div>
+      <div class="sortbar" id="sortbar">
+        <button data-s="default" class="on">综合</button>
+        <button data-s="asc">价格 ↑</button>
+        <button data-s="desc">价格 ↓</button>
+      </div>
+    </div>
+    <div class="prod-grid" id="grid-clothing"></div>
+    <div class="fav-empty" id="empty" style="display:none"><h3>没有匹配的单品</h3><p>换个筛选条件试试看。</p></div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="mall-feats">
+      <div class="ft"><span class="ic">🧵</span><b>优质面料</b><span>微弹舒适、耐穿耐洗，版型立体不变形。</span></div>
+      <div class="ft"><span class="ic">👗</span><b>时髦版型</b><span>直筒、阔腿、锥形随你挑，男女款齐全。</span></div>
+      <div class="ft"><span class="ic">📦</span><b>顺丰配送</b><span>全场满 ¥499 包邮，5–7 个工作日发货。</span></div>
+      <div class="ft"><span class="ic">🔄</span><b>无忧售后</b><span>30 天无忧退换，购物更安心。</span></div>
+    </div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js?v=20260828"></script>
+<script src="js/data.js?v=20260828"></script>
+<script src="js/shared.js?v=20260828"></script>
+<script>
+(async function(){
+  await loadSiteData();
+  mountChrome("clothing");
+
+  const all = PRODUCTS.filter(p=>p.cat==="clothing");
+  const qs = new URLSearchParams(location.search);
+  let gender = ["men","women"].includes(qs.get("g")) ? qs.get("g") : "all";
+  let kind   = ["jeans","top"].includes(qs.get("k")) ? qs.get("k") : "all";
+  let sortMode = "default";
+  const heartSvg = `<svg viewBox="0 0 24 24"><path d="M12 20.5S3.5 15 3.5 8.9C3.5 6.1 5.7 4 8.3 4c1.7 0 3 .9 3.7 2 .7-1.1 2-2 3.7-2 2.6 0 4.8 2.1 4.8 4.9C20.5 15 12 20.5 12 20.5z"/></svg>`;
+
+  function card(p){
+    return `<div class="card" data-id="${p.id}">
+      <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}
+        <button class="fav-btn ${Favs.has('product',p.id)?'on':''}" data-fav="${p.id}" title="收藏">${heartSvg}</button>
+        ${productMedia(p)}</div>
+      <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
+      <div class="price">¥${p.price}</div>
+      <button class="btn dark" style="width:100%;padding:11px;font-size:13px;margin-top:10px;justify-content:center" data-add="${p.id}">加入购物袋</button>
+    </div>`;
+  }
+  function render(){
+    let arr = all.filter(p=>
+      (gender==="all" || (p.opts&&p.opts.gender)===gender) &&
+      (kind==="all"   || (p.opts&&p.opts.kind)===kind));
+    if(sortMode==="asc")  arr.sort((a,b)=>a.price-b.price);
+    if(sortMode==="desc") arr.sort((a,b)=>b.price-a.price);
+    document.getElementById("grid-clothing").innerHTML = arr.map(card).join("");
+    document.getElementById("count").textContent = arr.length;
+    document.getElementById("empty").style.display = arr.length ? "none" : "block";
+  }
+  function syncChips(){
+    document.querySelectorAll("#g-filter button").forEach(x=>x.classList.toggle("on", x.dataset.g===gender));
+    document.querySelectorAll("#k-filter button").forEach(x=>x.classList.toggle("on", x.dataset.k===kind));
+  }
+  syncChips();
+  render();
+
+  document.getElementById("g-filter").addEventListener("click", e=>{
+    const b = e.target.closest("[data-g]"); if(!b) return;
+    gender = b.dataset.g;
+    document.querySelectorAll("#g-filter button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); render();
+  });
+  document.getElementById("k-filter").addEventListener("click", e=>{
+    const b = e.target.closest("[data-k]"); if(!b) return;
+    kind = b.dataset.k;
+    document.querySelectorAll("#k-filter button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); render();
+  });
+  document.getElementById("sortbar").addEventListener("click", e=>{
+    const b = e.target.closest("[data-s]"); if(!b) return;
+    sortMode = b.dataset.s;
+    document.querySelectorAll("#sortbar button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); render();
+  });
+
+  document.body.addEventListener("click", e=>{
+    const fav = e.target.closest("[data-fav]");
+    if(fav){
+      const on = Favs.toggle("product", fav.dataset.fav);
+      fav.classList.toggle("on", on);
+      toast(on ? "已收藏" : "已取消收藏");
+      return;
+    }
+    const b = e.target.closest("[data-add]"); if(!b) return;
+    const p = PRODUCTS.find(x=>x.id===b.dataset.add); if(!p) return;
+    Cart.add({sku:p.id, title:p.name, price:p.price, size:"M", svg:productMedia(p), meta:p.desc});
+    toast("已加入购物袋："+p.name);
+  });
+})();
+</script>
+</body>
+</html>

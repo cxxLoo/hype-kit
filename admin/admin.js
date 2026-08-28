@@ -56,8 +56,8 @@
     // 统计卡片
     const list = data || [];
     $("stat-total").textContent  = list.length;
-    $("stat-jersey").textContent = list.filter(x=>x.cat==="jersey").length;
-    $("stat-shoe").textContent   = list.filter(x=>x.cat==="shoe").length;
+    $("stat-jersey").textContent = list.filter(x=>x.cat==="clothing").length;
+    $("stat-shoe").textContent   = list.filter(x=>x.cat==="footwear").length;
     if(!list.length){ box.innerHTML = `<div class="empty-state">还没有商品，点击右上角「+ 新增商品」。</div>`; return; }
     box.innerHTML = `<table><thead><tr>
       <th>商品</th><th>ID</th><th>分类</th><th>价格</th><th>标签</th><th>操作</th>
@@ -66,11 +66,15 @@
     box.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>delProduct(b.dataset.del)));
   }
 
+  const CAT_PILL = {
+    clothing:'<span class="pill cat">服装</span>',
+    footwear:'<span class="pill cat shoe">鞋帽</span>',
+    jersey:'<span class="pill cat">球衣</span>',
+    shoe:'<span class="pill cat shoe">球鞋</span>'
+  };
   function rowHtml(r){
     const p = { cat:r.cat, name:r.name, opts:r.opts||{}, image_url:r.image_url||"" };
-    const catPill = r.cat==="jersey"
-      ? `<span class="pill cat">球衣</span>`
-      : `<span class="pill cat shoe">球鞋</span>`;
+    const catPill = CAT_PILL[r.cat] || `<span class="pill cat">${escapeHtml(r.cat||"")}</span>`;
     const tagPill = r.tag ? `<span class="pill tag">${escapeHtml(r.tag)}</span>` : `<span style="color:#c3c8d2">—</span>`;
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:12px">
@@ -100,9 +104,8 @@
     editingId = null; currentImageUrl = "";
     $("modal-title").textContent = "新增商品";
     $("f-id").disabled = false;
-    setForm({ id:"", cat:"jersey", name:"", description:"", price:699, tag:"", sort:100,
-      opts:{style:"stripe",primary:"#b1131a",secondary:"#0a2d5c",textColor:"#ffffff",number:"10",name:"YOU",sponsor:"HYPE"},
-      image_url:"" });
+    setForm({ id:"", cat:"clothing", name:"", description:"", price:399, tag:"", sort:100,
+      opts:{ gender:"men", kind:"jeans" }, image_url:"" });
     showMask(true);
   }
   function openEdit(r){
@@ -115,7 +118,7 @@
 
   function setForm(r){
     $("f-id").value = r.id || "";
-    $("f-cat").value = r.cat || "jersey";
+    $("f-cat").value = r.cat || "clothing";
     $("f-name").value = r.name || "";
     $("f-desc").value = r.description || "";
     $("f-price").value = r.price != null ? r.price : 0;
@@ -124,6 +127,9 @@
     $("f-image").value = "";
     $("image-hint").textContent = currentImageUrl ? "当前已有上传图片，选择新文件可替换。" : "留空则前端展示由配色生成的 SVG 图。";
     const o = r.opts || {};
+    // 服装 / 鞋帽
+    $("x-gender").value = ["men","women","unisex"].includes(o.gender) ? o.gender : "men";
+    $("x-kind").value   = ["jeans","top","shoe","hat"].includes(o.kind) ? o.kind : "jeans";
     // 球衣
     $("j-style").value = o.style || "stripe";
     $("j-primary").value = normColor(o.primary, "#b1131a");
@@ -148,13 +154,18 @@
 
   function syncCatUI(){
     const cat = $("f-cat").value;
+    $("opts-fashion").style.display = (cat==="clothing"||cat==="footwear")?"":"none";
     $("opts-jersey").style.display = cat==="jersey"?"":"none";
     $("opts-shoe").style.display   = cat==="shoe"?"":"none";
   }
 
   /* 从表单收集 opts */
   function collectOpts(){
-    if($("f-cat").value === "jersey"){
+    const cat = $("f-cat").value;
+    if(cat === "clothing" || cat === "footwear"){
+      return { gender:$("x-gender").value, kind:$("x-kind").value };
+    }
+    if(cat === "jersey"){
       return { style:$("j-style").value, primary:$("j-primary").value, secondary:$("j-secondary").value,
         textColor:$("j-textColor").value, number:$("j-number").value, name:$("j-pname").value, sponsor:$("j-sponsor").value };
     }
@@ -169,7 +180,7 @@
   }
 
   // 表单变化实时预览
-  ["f-cat","j-style","j-primary","j-secondary","j-textColor","j-number","j-pname","j-sponsor",
+  ["f-cat","x-gender","x-kind","j-style","j-primary","j-secondary","j-textColor","j-number","j-pname","j-sponsor",
    "s-body","s-sole","s-swoosh","s-lace","s-name"].forEach(id=>{
     $(id).addEventListener("input", ()=>{ syncCatUI(); renderPreview(); });
   });

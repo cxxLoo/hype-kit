@@ -74,10 +74,13 @@
   function escapeHtml(s){return String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));}
   window.escapeHtml = escapeHtml;
 
-  /* 商品展示图：优先用后台上传的真实图片，否则用 SVG 生成图 */
+  /* 商品展示图：优先用真实图片（时尚模特图），加载失败自动回退到备用图；
+     球衣/球鞋（保留供定制）无图片时用 SVG 生成图 */
   window.productMedia = function(p){
     if(p && p.image_url){
-      return `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name||"")}" style="width:82%;height:82%;object-fit:contain">`;
+      const seed = encodeURIComponent((p && p.id) || "hk");
+      const fb = "https://picsum.photos/seed/" + seed + "/700/900";
+      return `<img class="pm-img" src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name||"")}" loading="lazy" onerror="this.onerror=null;this.src='${fb}'">`;
     }
     return p && p.cat === "shoe" ? shoeSVG(p.opts) : jerseySVG(p ? p.opts : {});
   };
@@ -162,15 +165,15 @@
         <a class="logo" href="index.html">${NIKE_LOGO}<span class="brand">HYPE&nbsp;KIT</span></a>
         <div class="menu">
           <a href="index.html" data-k="home">首页</a>
-          <a href="jerseys.html" data-k="jerseys">球衣商城</a>
-          <a href="shoes.html" data-k="shoes">球鞋商城</a>
+          <a href="clothing.html" data-k="clothing">服装商城</a>
+          <a href="footwear.html" data-k="footwear">鞋帽商城</a>
           <a href="customize.html" data-k="custom">专属定制</a>
           <a href="service.html" data-k="service">客服中心</a>
           <a href="orders.html" data-k="orders">我的订单</a>
           <a href="club.html" data-k="club">俱乐部</a>
         </div>
         <div class="nav-right">
-          <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索球衣、球鞋"></div>
+          <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索牛仔裤、上衣、鞋帽"></div>
           <a class="icon-btn cart-link" href="favorites.html" title="我的收藏">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 20.5S3.5 15 3.5 8.9C3.5 6.1 5.7 4 8.3 4c1.7 0 3 .9 3.7 2 .7-1.1 2-2 3.7-2 2.6 0 4.8 2.1 4.8 4.9C20.5 15 12 20.5 12 20.5z" stroke="#111" stroke-width="2" stroke-linejoin="round"/></svg>
             <span class="fav-count">0</span>
@@ -193,11 +196,11 @@
         <div class="foot-grid">
           <div><div class="logo" style="margin-bottom:14px">${NIKE_LOGO}<span class="brand" style="color:#fff">HYPE KIT</span></div>
             <p style="color:#aaa;font-size:14px;max-width:320px">${C.footer_about || ""}</p></div>
-          <div><h5>选购</h5><a href="jerseys.html">球衣商城</a><a href="shoes.html">球鞋商城</a><a href="customize.html">专属定制</a><a href="jerseys.html">新品上市</a></div>
+          <div><h5>选购</h5><a href="clothing.html">服装商城</a><a href="footwear.html">鞋帽商城</a><a href="customize.html">专属定制</a><a href="clothing.html">新品上市</a></div>
           <div><h5>帮助</h5><a href="#">配送与退换</a><a href="#">尺码指南</a><a href="#">定制说明</a><a href="service.html">联系客服</a></div>
           <div><h5>关于</h5><a href="#">品牌故事</a><a href="#">俱乐部合作</a><a href="#">加入我们</a><a href="#">隐私政策</a></div>
         </div>
-        <div class="foot-bottom"><span>© 2026 HYPE KIT 球衣定制. 本站为演示 Demo,非真实交易。</span><span>中国大陆 · 简体中文</span></div>
+        <div class="foot-bottom"><span>© 2026 HYPE KIT 全球时尚牛仔. 本站为演示 Demo,非真实交易。</span><span>中国大陆 · 简体中文</span></div>
       </div></footer>`;
     }
     updateBadge();

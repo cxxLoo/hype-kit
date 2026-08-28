@@ -55,21 +55,25 @@
     if(!items.length){
       $("fav-products").innerHTML = `<div class="fav-empty" style="grid-column:1/-1">
         <h3>还没有收藏的商品</h3><p style="margin-bottom:20px">去商城逛逛，点右上角❤️收藏心仪单品。</p>
-        <a class="btn dark" href="jerseys.html">去逛球衣</a></div>`;
+        <a class="btn dark" href="clothing.html">去逛服装</a></div>`;
       return;
     }
-    $("fav-products").innerHTML = items.map(p=>`
-      <div class="card" data-id="${p.id}">
+    $("fav-products").innerHTML = items.map(p=>{
+      const canCustomize = p.cat==="jersey" || p.cat==="shoe";
+      const actions = canCustomize
+        ? `<div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn dark" style="flex:1;padding:10px;font-size:13px" data-add="${p.id}">加入购物袋</button>
+            <a class="btn" style="flex:1;padding:10px;font-size:13px;justify-content:center;border:1px solid #e5e5e5" href="customize.html?id=${p.id}">定制</a>
+          </div>`
+        : `<button class="btn dark" style="width:100%;padding:11px;font-size:13px;margin-top:10px;justify-content:center" data-add="${p.id}">加入购物袋</button>`;
+      return `<div class="card" data-id="${p.id}">
         <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}
           <button class="fav-btn on" data-fav="${p.id}" title="取消收藏">${heartSvg}</button>
           ${productMedia(p)}</div>
         <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
         <div class="price">¥${p.price}</div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn dark" style="flex:1;padding:10px;font-size:13px" data-add="${p.id}">加入购物袋</button>
-          <a class="btn" style="flex:1;padding:10px;font-size:13px;justify-content:center;border:1px solid #e5e5e5" href="customize.html?id=${p.id}">定制</a>
-        </div>
-      </div>`).join("");
+        ${actions}
+      </div>`;}).join("");
   }
 
   /* ---------- 帖子收藏 ---------- */
@@ -125,9 +129,8 @@
     const add = e.target.closest("[data-add]");
     if(add){
       const p = PRODUCTS.find(x=>x.id===add.dataset.add); if(!p) return;
-      const svg = p.cat==="jersey"?jerseySVG(p.opts):shoeSVG(p.opts);
-      Cart.add({sku:p.id,title:p.name,price:p.price,size:p.cat==="jersey"?"L":"42",svg,
-        meta:p.cat==="jersey"?"标准版 · 尺码 L":"标准配色 · 42码"});
+      const size = p.cat==="jersey"?"L":p.cat==="shoe"?"42":p.cat==="footwear"?"均码":"M";
+      Cart.add({sku:p.id,title:p.name,price:p.price,size,svg:productMedia(p),meta:p.desc});
       toast("已加入购物袋："+p.name);
     }
   });

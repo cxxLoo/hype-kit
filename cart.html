@@ -52,8 +52,8 @@ function render(){
   const list = Cart.all();
   const root = $("cart-body");
   if(!list.length){
-    root.innerHTML = `<div class="empty"><h3>购物袋是空的</h3><p style="margin-bottom:22px">去挑选一件球衣,或定制你的专属战袍。</p>
-      <a class="btn dark" href="jerseys.html">去逛逛</a></div>`;
+    root.innerHTML = `<div class="empty"><h3>购物袋是空的</h3><p style="margin-bottom:22px">去挑一条心仪的牛仔裤,或搭配一件时尚单品。</p>
+      <a class="btn dark" href="clothing.html">去逛逛</a></div>`;
     return;
   }
   const items = list.map(it=>`
@@ -81,7 +81,7 @@ function render(){
       <div class="sum-row"><span>配送费</span><span>${ship?"¥"+ship:"免运费"}</span></div>
       <div class="sum-row total"><span>合计</span><span>¥${total+ship}</span></div>
       <button class="btn dark block" style="margin-top:18px" id="checkout">去结算</button>
-      <a class="btn block" style="margin-top:10px;border:1px solid #e5e5e5" href="jerseys.html">继续购物</a>
+      <a class="btn block" style="margin-top:10px;border:1px solid #e5e5e5" href="clothing.html">继续购物</a>
     </div></div>`;
 
   root.querySelectorAll(".qty").forEach(q=>{

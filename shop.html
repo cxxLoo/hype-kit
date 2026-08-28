@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>商城 · HYPE KIT</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <script>
-  // 球衣 / 球鞋商城已拆分为独立页面；带 #shoes 锚点跳球鞋，否则跳球衣
-  location.replace(location.hash === "#shoes" ? "shoes.html" : "jerseys.html");
+  // 服装 / 鞋帽商城为独立页面；带 #shoes 或 #footwear 锚点跳鞋帽，否则跳服装
+  var h = location.hash;
+  location.replace((h === "#shoes" || h === "#footwear") ? "footwear.html" : "clothing.html");
 </script>
-<meta http-equiv="refresh" content="0;url=jerseys.html">
+<meta http-equiv="refresh" content="0;url=clothing.html">
 </head>
 <body></body>
 </html>

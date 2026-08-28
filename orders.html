@@ -94,14 +94,14 @@ function orderCard(o){
 async function load(){
   const tokens = MyOrders.tokens();
   if(!tokens.length){
-    root.innerHTML = `<div class="empty"><h3>还没有订单</h3><p style="margin-bottom:22px">先去挑一件球衣吧。</p>
-      <a class="btn dark" href="jerseys.html">去逛逛</a></div>`;
+    root.innerHTML = `<div class="empty"><h3>还没有订单</h3><p style="margin-bottom:22px">先去挑一条心仪的牛仔裤吧。</p>
+      <a class="btn dark" href="clothing.html">去逛逛</a></div>`;
     return;
   }
   const { data, error } = await sb.rpc("get_my_orders", { p_tokens: tokens });
   if(error){ root.innerHTML = `<div class="empty"><p>加载失败：${error.message}</p></div>`; return; }
   if(!data || !data.length){
-    root.innerHTML = `<div class="empty"><h3>还没有订单</h3><a class="btn dark" href="jerseys.html">去逛逛</a></div>`;
+    root.innerHTML = `<div class="empty"><h3>还没有订单</h3><a class="btn dark" href="clothing.html">去逛逛</a></div>`;
     return;
   }
   root.innerHTML = data.map(orderCard).join("");

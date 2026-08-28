@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HYPE KIT · 球衣定制商城</title>
+<title>HYPE KIT · 全球时尚牛仔穿搭</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="css/style.css?v=20260828">
 </head>
@@ -18,8 +18,8 @@
     <h1 id="hero-title"></h1>
     <p id="hero-subtitle"></p>
     <div style="display:flex;gap:14px;flex-wrap:wrap">
-      <a class="btn" href="customize.html">立即定制</a>
-      <a class="btn ghost" href="jerseys.html">浏览商城</a>
+      <a class="btn" href="clothing.html">立即选购</a>
+      <a class="btn ghost" href="footwear.html">逛鞋帽</a>
     </div>
   </div>
 </section>
@@ -29,17 +29,17 @@
   <div class="container">
     <h2>热门品类</h2>
     <div class="cat-grid">
-      <a class="cat-card" href="jerseys.html">
-        <div class="bg c-home"></div>
-        <div class="lbl"><h3>主场球衣</h3><span class="go">选购 →</span></div>
+      <a class="cat-card" href="clothing.html?g=men">
+        <div class="bg c-men"></div>
+        <div class="lbl"><h3>男装</h3><span class="go">选购 →</span></div>
       </a>
-      <a class="cat-card" href="jerseys.html">
-        <div class="bg c-away"></div>
-        <div class="lbl"><h3>客场球衣</h3><span class="go">选购 →</span></div>
+      <a class="cat-card" href="clothing.html?g=women">
+        <div class="bg c-women"></div>
+        <div class="lbl"><h3>女装</h3><span class="go">选购 →</span></div>
       </a>
-      <a class="cat-card" href="shoes.html">
-        <div class="bg c-shoe"></div>
-        <div class="lbl"><h3>足球战靴</h3><span class="go">选购 →</span></div>
+      <a class="cat-card" href="footwear.html">
+        <div class="bg c-acc"></div>
+        <div class="lbl"><h3>鞋帽配饰</h3><span class="go">选购 →</span></div>
       </a>
     </div>
   </div>
@@ -53,7 +53,7 @@
       <div class="kicker" id="promo-kicker" style="color:#757575;letter-spacing:2px;font-weight:600"></div>
       <h2 id="promo-title" style="margin:10px 0 16px"></h2>
       <p id="promo-text" style="color:#757575;font-size:16px;margin-bottom:24px"></p>
-      <a class="btn dark" href="customize.html">开始定制 →</a>
+      <a class="btn dark" href="clothing.html">去逛服装 →</a>
     </div>
   </div>
 </section>
@@ -85,13 +85,19 @@
   document.getElementById("promo-title").textContent = SITE.promo_title;
   document.getElementById("promo-text").textContent = SITE.promo_text;
 
-  document.getElementById("promo-preview").innerHTML = jerseySVG(
-    {style:"stripe",primary:"#b1131a",secondary:"#0a2d5c",number:"10",name:"YOU",sponsor:"HYPE",textColor:"#fff"});
+  document.getElementById("promo-preview").innerHTML =
+    `<img src="https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=640&q=80"
+       alt="牛仔穿搭" loading="lazy"
+       onerror="this.onerror=null;this.src='https://picsum.photos/seed/denimpromo/640/760'"
+       style="width:100%;border-radius:10px;object-fit:cover;aspect-ratio:4/5">`;
 
   const feat = PRODUCTS.slice(0,4);
   document.getElementById("featured").innerHTML = feat.map(p=>{
     const media = productMedia(p);
-    return `<a class="card" href="customize.html?id=${p.id}">
+    const href = p.cat==="footwear" ? "footwear.html"
+               : p.cat==="clothing" ? "clothing.html"
+               : "customize.html?id=" + p.id;
+    return `<a class="card" href="${href}">
       <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}${media}</div>
       <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
       <div class="price">¥${p.price}</div></a>`;
