@@ -15,8 +15,16 @@
     if(isAdmin !== true){ await sb.auth.signOut(); location.replace("login.html"); return null; }
     meId = session.user.id;
     const email = session.user.email || "admin";
-    $("who").textContent = email;
-    $("avatar").textContent = (email[0] || "A").toUpperCase();
+    let name = (session.user.user_metadata && session.user.user_metadata.display_name) || email.split("@")[0];
+    let avatar = "";
+    try{
+      const { data } = await sb.from("profiles").select("display_name,avatar_url").eq("id", meId).single();
+      if(data){ name = data.display_name || name; avatar = data.avatar_url || ""; }
+    }catch(e){}
+    $("who").textContent = name;
+    const ava = $("avatar");
+    if(avatar){ ava.innerHTML = `<img src="${avatar}" alt="">`; }
+    else { ava.textContent = (name[0] || "A").toUpperCase(); }
     return session;
   }
 
@@ -595,7 +603,7 @@
   async function loadAccounts(){
     const box = $("account-list");
     const { data, error } = await sb.from("profiles")
-      .select("id,email,display_name,is_admin,created_at")
+      .select("id,email,display_name,avatar_url,is_admin,created_at")
       .order("created_at",{ascending:true});
     if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
     if(!data || !data.length){ box.innerHTML = `<div class="empty-state">暂无账号。</div>`; return; }
@@ -616,8 +624,12 @@
     }else{
       action = `<button class="btn brand sm" data-toggle="${u.id}" data-to="1">设为管理员</button>`;
     }
+    const nm = u.display_name || "—";
+    const ava = u.avatar_url
+      ? `<span class="avatar sm"><img src="${u.avatar_url}" alt=""></span>`
+      : `<span class="avatar sm">${escapeHtml((nm[0]||"U").toUpperCase())}</span>`;
     return `<tr>
-      <td class="pname">${escapeHtml(u.display_name||"—")}</td>
+      <td class="pname"><span class="acc-user">${ava}${escapeHtml(nm)}</span></td>
       <td><span class="pid">${escapeHtml(u.email||"")}</span></td>
       <td>${badge}</td>
       <td style="color:#8a93a6">${u.created_at?new Date(u.created_at).toLocaleString():"—"}</td>

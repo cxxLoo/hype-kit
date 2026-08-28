@@ -91,7 +91,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .topbar .user{display:flex;align-items:center;gap:14px}
 .topbar .who{display:flex;align-items:center;gap:9px;font-size:13px;color:#4a5163}
 .avatar{width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.sm{width:26px;height:26px;font-size:12px}
+.acc-user{display:inline-flex;align-items:center;gap:9px}
 
 .content{padding:26px;max-width:1200px;width:100%;margin:0 auto}
 
