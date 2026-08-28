@@ -193,20 +193,118 @@
     return p && p.cat === "shoe" ? shoeSVG(p.opts) : jerseySVG(p ? p.opts : {});
   };
 
-  /* ---------- 购物车 ---------- */
+  /* ================= 用户数据同步：收藏 + 购物袋 =================
+     登录用户 → 存 Supabase（跨设备）；游客 → 存浏览器本地；
+     登录后首次加载会把本地数据迁移到账号，再清空本地。 */
+  const FAV_KEYS = { product:"hk_fav_products_v1", post:"hk_fav_posts_v1" };
+  let CURRENT_USER = null;
+  let __fav  = { product:[], post:[] };
+  let __cart = [];
+  let _userDataPromise = null;
+
+  function readLS(key){ try{ return JSON.parse(localStorage.getItem(key)) || []; }catch(e){ return []; } }
+  function writeLS(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+  async function migrateGuestData(){
+    const lp = readLS(FAV_KEYS.product), lpp = readLS(FAV_KEYS.post), lc = readLS(LS_KEY);
+    if(!lp.length && !lpp.length && !lc.length) return;
+    let ok = true;
+    const rows = [];
+    lp.forEach(id => rows.push({ user_id:CURRENT_USER, item_type:"product", item_id:String(id) }));
+    lpp.forEach(id => rows.push({ user_id:CURRENT_USER, item_type:"post", item_id:String(id) }));
+    if(rows.length){
+      const { error } = await sb.from("favorites").upsert(rows, { onConflict:"user_id,item_type,item_id", ignoreDuplicates:true });
+      if(error) ok = false;
+    }
+    if(lc.length){
+      const crows = lc.map(it => ({ user_id:CURRENT_USER, sku:it.sku||"", title:it.title||"",
+        price:it.price||0, size:it.size||"", meta:it.meta||"", svg:it.svg||"", qty:it.qty||1 }));
+      const { error } = await sb.from("cart_items").insert(crows);
+      if(error) ok = false;
+    }
+    if(ok){
+      localStorage.removeItem(FAV_KEYS.product);
+      localStorage.removeItem(FAV_KEYS.post);
+      localStorage.removeItem(LS_KEY);
+    }
+  }
+
+  async function _loadUserData(){
+    try{
+      const { data:{ session } } = await sb.auth.getSession();
+      CURRENT_USER = session && session.user ? session.user.id : null;
+    }catch(e){ CURRENT_USER = null; }
+
+    if(CURRENT_USER){
+      try{ await migrateGuestData(); }catch(e){}
+      __fav = { product:[], post:[] };
+      try{
+        const { data } = await sb.from("favorites").select("item_type,item_id")
+          .eq("user_id", CURRENT_USER).order("created_at", { ascending:false });
+        (data||[]).forEach(f => { if(__fav[f.item_type]) __fav[f.item_type].push(f.item_id); });
+      }catch(e){}
+      try{
+        const { data } = await sb.from("cart_items").select("*")
+          .eq("user_id", CURRENT_USER).order("created_at", { ascending:true });
+        __cart = (data||[]).map(r => ({ id:r.id, sku:r.sku, title:r.title, price:r.price,
+          size:r.size, meta:r.meta, svg:r.svg, qty:r.qty }));
+      }catch(e){}
+    }else{
+      __fav = { product: readLS(FAV_KEYS.product), post: readLS(FAV_KEYS.post) };
+      __cart = readLS(LS_KEY);
+    }
+    updateBadge(); updateFavBadge();
+  }
+  // 幂等：同一次页面加载只真正拉取一次
+  window.loadUserData = function(force){
+    if(_userDataPromise && !force) return _userDataPromise;
+    _userDataPromise = _loadUserData();
+    return _userDataPromise;
+  };
+  window.currentUserId = () => CURRENT_USER;
+
+  /* ---------- 购物袋 ---------- */
   window.Cart = {
-    all(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){return[]} },
-    save(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); updateBadge(); },
-    add(item){
-      const list = this.all();
-      item.id = item.id || ("i"+Date.now()+Math.floor(Math.random()*1000));
-      item.qty = item.qty || 1;
-      list.push(item); this.save(list);
+    all(){ return __cart.slice(); },
+    save(list){
+      __cart = (list||[]).slice();
+      if(CURRENT_USER){
+        if(!__cart.length){ sb.from("cart_items").delete().eq("user_id", CURRENT_USER).then(()=>{}, ()=>{}); }
+      }else{
+        writeLS(LS_KEY, __cart);
+      }
+      updateBadge();
     },
-    remove(id){ this.save(this.all().filter(x=>x.id!==id)); },
-    setQty(id,q){ const l=this.all(); const it=l.find(x=>x.id===id); if(it){it.qty=Math.max(1,q); this.save(l);} },
-    count(){ return this.all().reduce((n,x)=>n+x.qty,0); },
-    total(){ return this.all().reduce((n,x)=>n+x.price*x.qty,0); }
+    add(item){
+      item.qty = item.qty || 1;
+      if(CURRENT_USER){
+        const rec = { sku:item.sku||"", title:item.title||"", price:item.price||0,
+          size:item.size||"", meta:item.meta||"", svg:item.svg||"", qty:item.qty };
+        const tmp = "tmp"+Date.now()+Math.floor(Math.random()*1000);
+        __cart.push(Object.assign({ id:tmp }, rec));
+        updateBadge();
+        sb.from("cart_items").insert(Object.assign({ user_id:CURRENT_USER }, rec)).select("id").single()
+          .then(({ data })=>{ const it = __cart.find(x=>x.id===tmp); if(it && data) it.id = data.id; }, ()=>{});
+      }else{
+        item.id = item.id || ("i"+Date.now()+Math.floor(Math.random()*1000));
+        __cart.push(item); writeLS(LS_KEY, __cart); updateBadge();
+      }
+    },
+    remove(id){
+      __cart = __cart.filter(x=>x.id!==id);
+      if(CURRENT_USER){ sb.from("cart_items").delete().eq("id", id).then(()=>{}, ()=>{}); }
+      else{ writeLS(LS_KEY, __cart); }
+      updateBadge();
+    },
+    setQty(id,q){
+      const it = __cart.find(x=>x.id===id); if(!it) return;
+      it.qty = Math.max(1,q);
+      if(CURRENT_USER){ sb.from("cart_items").update({ qty:it.qty }).eq("id", id).then(()=>{}, ()=>{}); }
+      else{ writeLS(LS_KEY, __cart); }
+      updateBadge();
+    },
+    count(){ return __cart.reduce((n,x)=>n+x.qty,0); },
+    total(){ return __cart.reduce((n,x)=>n+x.price*x.qty,0); }
   };
   function updateBadge(){
     document.querySelectorAll(".cart-count").forEach(el=>{
@@ -216,19 +314,31 @@
   }
   window.updateCartBadge = updateBadge;
 
-  /* ---------- 收藏（本地，商品 + 帖子） ---------- */
+  /* ---------- 收藏（商品 + 帖子） ---------- */
   window.Favs = {
-    KEYS: { product:"hk_fav_products_v1", post:"hk_fav_posts_v1" },
-    list(type){ try{ return JSON.parse(localStorage.getItem(this.KEYS[type])) || []; }catch(e){ return []; } },
-    has(type, id){ return this.list(type).includes(id); },
+    KEYS: FAV_KEYS,
+    list(type){ return (__fav[type] || []).slice(); },
+    has(type, id){ return (__fav[type] || []).includes(id); },
     toggle(type, id){
-      const l = this.list(type); const i = l.indexOf(id);
-      if(i>=0) l.splice(i,1); else l.unshift(id);
-      localStorage.setItem(this.KEYS[type], JSON.stringify(l));
+      const arr = __fav[type] || (__fav[type] = []);
+      const i = arr.indexOf(id);
+      const nowOn = i < 0;
+      if(nowOn) arr.unshift(id); else arr.splice(i,1);
+      if(CURRENT_USER){
+        if(nowOn){
+          sb.from("favorites").upsert({ user_id:CURRENT_USER, item_type:type, item_id:String(id) },
+            { onConflict:"user_id,item_type,item_id", ignoreDuplicates:true }).then(()=>{}, ()=>{});
+        }else{
+          sb.from("favorites").delete().eq("user_id", CURRENT_USER)
+            .eq("item_type", type).eq("item_id", String(id)).then(()=>{}, ()=>{});
+        }
+      }else{
+        writeLS(FAV_KEYS[type], __fav[type]);
+      }
       updateFavBadge();
-      return i<0; // true = 现在已收藏
+      return nowOn; // true = 现在已收藏
     },
-    count(){ return this.list("product").length + this.list("post").length; }
+    count(){ return (__fav.product||[]).length + (__fav.post||[]).length; }
   };
   function updateFavBadge(){
     document.querySelectorAll(".fav-count").forEach(el=>{
@@ -314,6 +424,7 @@
     updateBadge();
     updateFavBadge();
     refreshAccount();
+    if(window.loadUserData) window.loadUserData();
   };
 
   function avatarInner(name, url){

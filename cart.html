@@ -43,6 +43,7 @@
 <script>
 (async function(){
 await loadContent();
+await loadUserData();
 mountChrome("");
 
 const $ = (id)=>document.getElementById(id);

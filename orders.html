@@ -13,7 +13,7 @@
 <section class="section">
   <div class="container">
     <h2>我的订单</h2>
-    <div class="sub">仅显示本设备下单的订单。换设备/清缓存后可凭订单号联系客服查询。</div>
+    <div class="sub">登录后订单存于账号，换设备登录同一账号即可查看；未登录的订单仅存本设备。</div>
     <div id="orders-body"><div class="empty"><p>加载中…</p></div></div>
   </div>
 </section>
@@ -27,6 +27,7 @@
 <script>
 (async function(){
 await loadContent();
+await loadUserData();
 mountChrome("orders");
 
 const root = document.getElementById("orders-body");
@@ -93,18 +94,30 @@ function orderCard(o){
 
 async function load(){
   const tokens = MyOrders.tokens();
-  if(!tokens.length){
+  const uid = window.currentUserId && window.currentUserId();
+
+  // 汇总：账号订单（跨设备） + 本设备 token 订单，按 id 去重
+  const map = {};
+  if(uid){
+    try{
+      const { data } = await sb.rpc("get_user_orders");
+      (data||[]).forEach(o=> map[o.id] = o);
+    }catch(e){}
+  }
+  if(tokens.length){
+    try{
+      const { data } = await sb.rpc("get_my_orders", { p_tokens: tokens });
+      (data||[]).forEach(o=> map[o.id] = o);
+    }catch(e){}
+  }
+
+  const list = Object.values(map).sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+  if(!list.length){
     root.innerHTML = `<div class="empty"><h3>还没有订单</h3><p style="margin-bottom:22px">先去挑一条心仪的牛仔裤吧。</p>
       <a class="btn dark" href="clothing.html">去逛逛</a></div>`;
     return;
   }
-  const { data, error } = await sb.rpc("get_my_orders", { p_tokens: tokens });
-  if(error){ root.innerHTML = `<div class="empty"><p>加载失败：${error.message}</p></div>`; return; }
-  if(!data || !data.length){
-    root.innerHTML = `<div class="empty"><h3>还没有订单</h3><a class="btn dark" href="clothing.html">去逛逛</a></div>`;
-    return;
-  }
-  root.innerHTML = data.map(orderCard).join("");
+  root.innerHTML = list.map(orderCard).join("");
 
   root.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click", async ()=>{
     const act = b.dataset.act;

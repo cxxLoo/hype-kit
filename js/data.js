@@ -138,4 +138,5 @@ window.loadContent = async function(){
 /* 一次性加载前端所需全部数据 */
 window.loadSiteData = async function(){
   await Promise.all([window.loadContent(), window.loadProducts()]);
+  if(window.loadUserData) await window.loadUserData();
 };
