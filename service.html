@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>客服中心 · HYPE KIT</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<section class="section">
+  <div class="container">
+    <h2>客服中心</h2>
+    <div class="sub">智能助手 7×24 在线，温柔解答您的每一个问题。也欢迎在右侧留下宝贵反馈。</div>
+
+    <div class="cs-wrap">
+      <!-- 在线客服聊天 -->
+      <div class="cs-chat">
+        <div class="cs-head">
+          <div class="ava">🎽</div>
+          <div class="info">
+            <b>HYPE 智能客服</b>
+            <span><i class="dot"></i> 在线 · 通常几秒内回复</span>
+          </div>
+        </div>
+        <div class="cs-body" id="cs-body"></div>
+        <div class="cs-quick" id="cs-quick"></div>
+        <form class="cs-input" id="cs-input">
+          <input id="cs-text" autocomplete="off" placeholder="请输入您的问题，回车发送…">
+          <button class="send" type="submit" id="cs-send">发送</button>
+        </form>
+      </div>
+
+      <!-- 留言反馈 -->
+      <form class="cs-form" id="fb-form">
+        <h3>留言反馈</h3>
+        <div class="fdesc">遇到问题或有建议？留下信息，我们会尽快回复您。</div>
+        <div class="mfield">
+          <label>称呼（选填）</label>
+          <input id="fb-name" maxlength="30" placeholder="怎么称呼您">
+        </div>
+        <div class="mfield">
+          <label>联系方式（选填）</label>
+          <input id="fb-contact" maxlength="60" placeholder="手机号 / 微信 / 邮箱">
+        </div>
+        <div class="mfield">
+          <label>反馈类型</label>
+          <select id="fb-category">
+            <option value="咨询">咨询</option>
+            <option value="售后">售后</option>
+            <option value="投诉">投诉</option>
+            <option value="建议">建议</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="mfield">
+          <label>问题 / 建议内容</label>
+          <textarea id="fb-message" maxlength="500" placeholder="请描述您遇到的问题或想法…"></textarea>
+        </div>
+        <button class="btn dark block" type="submit" id="fb-submit">提交反馈</button>
+        <div class="cs-ok" id="fb-ok"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/shared.js"></script>
+<script src="js/chat.js"></script>
+<script>
+(async function(){
+  await loadContent();
+  mountChrome("service");
+  await HypeBot.loadFAQs();   // 从后台知识库加载最新话术（失败自动用内置）
+
+  const body  = document.getElementById("cs-body");
+  const input = document.getElementById("cs-text");
+  const sendBtn = document.getElementById("cs-send");
+  const SESSION = "s_" + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+
+  function now(){ return new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
+
+  function addMsg(text, who){
+    const row = document.createElement("div");
+    row.className = "cs-row " + (who==="me" ? "me" : "bot");
+    const mini = who==="me" ? "🙂" : "🎽";
+    row.innerHTML =
+      `<div class="mini">${mini}</div>
+       <div><div class="bubble">${escapeHtml(text).replace(/\n/g,"<br>")}</div>
+       <div class="cs-time">${now()}</div></div>`;
+    body.appendChild(row);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function showTyping(){
+    const row = document.createElement("div");
+    row.className = "cs-row bot"; row.id = "cs-typing";
+    row.innerHTML = `<div class="mini">🎽</div><div class="bubble typing"><span></span><span></span><span></span></div>`;
+    body.appendChild(row); body.scrollTop = body.scrollHeight;
+  }
+  function hideTyping(){ const t=document.getElementById("cs-typing"); if(t) t.remove(); }
+
+  // 记录反馈到 Supabase（失败不影响聊天体验）
+  async function logFeedback(row){
+    try{
+      const { error } = await sb.from("feedbacks").insert(row);
+      if(error) console.warn("[feedback] 记录失败：", error.message);
+    }catch(e){ console.warn("[feedback] 记录异常：", e.message); }
+  }
+
+  async function handleUser(text){
+    text = (text||"").trim();
+    if(!text) return;
+    addMsg(text, "me");
+    input.value = "";
+    sendBtn.disabled = true;
+    showTyping();
+    const res = HypeBot.answer(text);
+    // 模拟思考，温柔一点
+    await new Promise(r=>setTimeout(r, 500 + Math.random()*500));
+    hideTyping();
+    addMsg(res.text, "bot");
+    sendBtn.disabled = false;
+    input.focus();
+    logFeedback({ message:text, reply:res.text, category:res.category, source:"chat", session_id:SESSION });
+  }
+
+  // 快捷提问
+  const quick = document.getElementById("cs-quick");
+  quick.innerHTML = HypeBot.suggestions.map(s=>`<button type="button" class="cs-chip">${escapeHtml(s)}</button>`).join("");
+  quick.querySelectorAll(".cs-chip").forEach(c=>c.addEventListener("click",()=>handleUser(c.textContent)));
+
+  document.getElementById("cs-input").addEventListener("submit", (e)=>{ e.preventDefault(); handleUser(input.value); });
+
+  // 开场白
+  addMsg(HypeBot.greeting(), "bot");
+
+  /* ---------- 留言反馈表单 ---------- */
+  const fbForm = document.getElementById("fb-form");
+  const fbOk = document.getElementById("fb-ok");
+  fbForm.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const message = document.getElementById("fb-message").value.trim();
+    if(!message){ fbOk.style.color="#f60c1a"; fbOk.textContent="请填写反馈内容～"; return; }
+    const btn = document.getElementById("fb-submit");
+    btn.disabled = true; btn.textContent = "提交中…";
+    const row = {
+      name: document.getElementById("fb-name").value.trim(),
+      contact: document.getElementById("fb-contact").value.trim(),
+      category: document.getElementById("fb-category").value,
+      message, reply:"", source:"form", session_id:SESSION
+    };
+    let ok = true;
+    try{
+      const { error } = await sb.from("feedbacks").insert(row);
+      if(error){ ok=false; console.warn(error.message); }
+    }catch(err){ ok=false; console.warn(err.message); }
+    btn.disabled = false; btn.textContent = "提交反馈";
+    if(ok){
+      fbForm.reset();
+      fbOk.style.color="#0f8a44";
+      fbOk.textContent="提交成功，谢谢您的反馈💚 我们会尽快处理。";
+    }else{
+      fbOk.style.color="#f60c1a";
+      fbOk.textContent="提交失败，请稍后再试或直接在上方联系客服。";
+    }
+  });
+})();
+</script>
+</body>
+</html>

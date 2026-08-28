@@ -143,6 +143,7 @@
           <a href="shop.html" data-k="shop">球衣商城</a>
           <a href="shop.html#shoes" data-k="shop">球鞋</a>
           <a href="customize.html" data-k="custom">专属定制</a>
+          <a href="service.html" data-k="service">客服中心</a>
           <a href="orders.html" data-k="orders">我的订单</a>
           <a href="index.html#club">俱乐部</a>
         </div>
@@ -155,6 +156,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 7h12l-1 13H7L6 7z" stroke="#111" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="#111" stroke-width="2"/></svg>
             <span class="cart-count">0</span>
           </a>
+          <a class="nav-account" id="nav-account" href="account.html">登录/注册</a>
         </div>
       </div></div></div>`;
       const cur = nav.querySelector(`.menu a[data-k="${active}"]`);
@@ -167,12 +169,28 @@
           <div><div class="logo" style="margin-bottom:14px">${NIKE_LOGO}<span class="brand" style="color:#fff">HYPE KIT</span></div>
             <p style="color:#aaa;font-size:14px;max-width:320px">${C.footer_about || ""}</p></div>
           <div><h5>选购</h5><a href="shop.html">球衣商城</a><a href="shop.html#shoes">球鞋</a><a href="customize.html">专属定制</a><a href="shop.html">新品上市</a></div>
-          <div><h5>帮助</h5><a href="#">配送与退换</a><a href="#">尺码指南</a><a href="#">定制说明</a><a href="#">联系客服</a></div>
+          <div><h5>帮助</h5><a href="#">配送与退换</a><a href="#">尺码指南</a><a href="#">定制说明</a><a href="service.html">联系客服</a></div>
           <div><h5>关于</h5><a href="#">品牌故事</a><a href="#">俱乐部合作</a><a href="#">加入我们</a><a href="#">隐私政策</a></div>
         </div>
         <div class="foot-bottom"><span>© 2026 HYPE KIT 球衣定制. 本站为演示 Demo,非真实交易。</span><span>中国大陆 · 简体中文</span></div>
       </div></footer>`;
     }
     updateBadge();
+    refreshAccount();
   };
+
+  async function refreshAccount(){
+    const el = document.getElementById("nav-account");
+    if(!el || !window.sb) return;
+    try{
+      const { data:{ session } } = await sb.auth.getSession();
+      const user = session && session.user;
+      if(user){
+        const name = (user.user_metadata && user.user_metadata.display_name) || user.email.split("@")[0];
+        el.textContent = "我的 · " + name;
+      }else{
+        el.textContent = "登录/注册";
+      }
+    }catch(e){}
+  }
 })();

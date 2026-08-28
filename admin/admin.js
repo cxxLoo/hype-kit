@@ -4,11 +4,16 @@
   const $ = (id)=>document.getElementById(id);
   let editingId = null;         // 正在编辑的商品 id；null 表示新增
   let currentImageUrl = "";     // 当前商品图片 URL
+  let meId = null;              // 当前登录管理员的用户 id
 
   /* ---------- 登录校验 ---------- */
   async function requireAuth(){
     const { data:{ session } } = await sb.auth.getSession();
     if(!session){ location.replace("login.html"); return null; }
+    // 必须是管理员
+    const { data:isAdmin } = await sb.rpc("is_admin");
+    if(isAdmin !== true){ await sb.auth.signOut(); location.replace("login.html"); return null; }
+    meId = session.user.id;
     const email = session.user.email || "admin";
     $("who").textContent = email;
     $("avatar").textContent = (email[0] || "A").toUpperCase();
@@ -24,7 +29,7 @@
   }
 
   /* ---------- 标签页切换 ---------- */
-  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders" };
+  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts" };
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
@@ -32,6 +37,9 @@
     $("crumb").textContent = t.dataset.crumb || "";
     Object.keys(SECTIONS).forEach(key=>{ $(SECTIONS[key]).style.display = key===k ? "" : "none"; });
     if(k==="orders") loadOrders();
+    if(k==="feedback") loadFeedback();
+    if(k==="faqs") loadFaqs();
+    if(k==="accounts") loadAccounts();
   }));
 
   /* ---------- 退出 ---------- */
@@ -333,6 +341,289 @@
     loadOrders();
   }
 
+  /* ================= 用户反馈 ================= */
+  const FB_CAT_CLASS = { "咨询":"fb-ask","售后":"fb-after","投诉":"fb-complain","建议":"fb-suggest","其他":"fb-other" };
+  const FB_CAT_COLOR = { "咨询":"#3b6fe0","售后":"#e07b00","投诉":"#e0342b","建议":"#16a34a","其他":"#8a93a6" };
+  const FB_CATS = ["咨询","售后","投诉","建议","其他"];
+  let fbCache = [];
+  let fbFilter = "all";
+  let fbSearch = "";
+
+  document.querySelectorAll("#fb-filter .chip").forEach(c=>c.addEventListener("click",()=>{
+    document.querySelectorAll("#fb-filter .chip").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on"); fbFilter = c.dataset.f; renderFeedback();
+  }));
+  $("fb-search").addEventListener("input", (e)=>{ fbSearch = e.target.value.trim().toLowerCase(); renderFeedback(); });
+  $("fb-refresh").addEventListener("click", loadFeedback);
+
+  async function loadFeedback(){
+    const box = $("feedback-list");
+    const { data, error } = await sb.from("feedbacks").select("*").order("created_at",{ascending:false}).limit(1000);
+    if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
+    fbCache = data || [];
+    renderFeedbackStats();
+    renderTrend();
+    renderCats();
+    renderFeedback();
+  }
+
+  function isToday(ts){
+    const d = new Date(ts), n = new Date();
+    return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
+  }
+
+  function renderFeedbackStats(){
+    $("fb-total").textContent    = fbCache.length;
+    $("fb-today").textContent    = fbCache.filter(f=>isToday(f.created_at)).length;
+    $("fb-pending").textContent  = fbCache.filter(f=>f.status==="new").length;
+    $("fb-resolved").textContent = fbCache.filter(f=>f.status==="resolved").length;
+  }
+
+  function renderTrend(){
+    const days = [];
+    const today = new Date(); today.setHours(0,0,0,0);
+    for(let i=6;i>=0;i--){
+      const d = new Date(today); d.setDate(d.getDate()-i);
+      days.push({ label:(d.getMonth()+1)+"/"+d.getDate(), start:d.getTime(), end:d.getTime()+86400000, count:0 });
+    }
+    fbCache.forEach(f=>{
+      const t = new Date(f.created_at).getTime();
+      const day = days.find(x=>t>=x.start && t<x.end);
+      if(day) day.count++;
+    });
+    const max = Math.max(1, ...days.map(d=>d.count));
+    $("fb-trend").innerHTML = days.map(d=>{
+      const h = Math.round(d.count/max*140);
+      return `<div class="tbar"><div class="v">${d.count}</div>
+        <div class="bar" style="height:${Math.max(4,h)}px"></div>
+        <div class="d">${d.label}</div></div>`;
+    }).join("");
+  }
+
+  function renderCats(){
+    const counts = {}; FB_CATS.forEach(c=>counts[c]=0);
+    fbCache.forEach(f=>{ const c = FB_CATS.includes(f.category)?f.category:"其他"; counts[c]++; });
+    const max = Math.max(1, ...FB_CATS.map(c=>counts[c]));
+    $("fb-cats").innerHTML = FB_CATS.map(c=>{
+      const w = Math.round(counts[c]/max*100);
+      return `<div class="cat-row">
+        <span class="nm">${c}</span>
+        <span class="track"><span class="fill" style="width:${w}%;background:${FB_CAT_COLOR[c]}"></span></span>
+        <span class="ct">${counts[c]}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function fbFiltered(){
+    let list = fbCache.slice();
+    if(fbFilter==="new" || fbFilter==="resolved") list = list.filter(f=>f.status===fbFilter);
+    else if(fbFilter==="chat" || fbFilter==="form") list = list.filter(f=>f.source===fbFilter);
+    if(fbSearch){
+      list = list.filter(f=>
+        (f.message||"").toLowerCase().includes(fbSearch) ||
+        (f.contact||"").toLowerCase().includes(fbSearch) ||
+        (f.name||"").toLowerCase().includes(fbSearch));
+    }
+    return list;
+  }
+
+  function renderFeedback(){
+    const box = $("feedback-list");
+    const list = fbFiltered();
+    if(!list.length){ box.innerHTML = `<div class="empty-state">暂无反馈记录。</div>`; return; }
+    box.innerHTML = `<table><thead><tr>
+      <th>时间</th><th>来源</th><th>类型</th><th>用户</th><th>内容</th><th>状态</th><th>操作</th>
+    </tr></thead><tbody>${list.map(fbRow).join("")}</tbody></table>`;
+    box.querySelectorAll("[data-fbview]").forEach(b=>b.addEventListener("click",()=>openFeedback(b.dataset.fbview)));
+  }
+
+  function fbRow(f){
+    const catCls = FB_CAT_CLASS[f.category] || "fb-other";
+    const srcCls = f.source==="form" ? "src-form" : "src-chat";
+    const srcTxt = f.source==="form" ? "留言" : "客服";
+    const stCls  = f.status==="resolved" ? "st-resolved" : "st-new";
+    const stTxt  = f.status==="resolved" ? "已处理" : "待处理";
+    const who = escapeHtml(f.name||"") + (f.contact?`<div style="color:#8a93a6;font-size:12px">${escapeHtml(f.contact)}</div>`:"");
+    return `<tr>
+      <td style="color:#8a93a6;white-space:nowrap">${new Date(f.created_at).toLocaleString()}</td>
+      <td><span class="pill ${srcCls}">${srcTxt}</span></td>
+      <td><span class="pill ${catCls}">${escapeHtml(f.category||"其他")}</span></td>
+      <td>${who || '<span style="color:#c3c8d2">匿名</span>'}</td>
+      <td><div class="fb-msg">${escapeHtml(f.message||"")}</div></td>
+      <td><span class="pill ${stCls}">${stTxt}</span></td>
+      <td><div class="row-actions"><button class="btn ghost sm" data-fbview="${f.id}">查看</button></div></td>
+    </tr>`;
+  }
+
+  function openFeedback(id){
+    const f = fbCache.find(x=>x.id===id); if(!f) return;
+    $("fb-title").textContent = "反馈详情";
+    $("fb-body").innerHTML = `
+      <div class="om-row"><span>时间</span><b>${new Date(f.created_at).toLocaleString()}</b></div>
+      <div class="om-row"><span>来源</span><b>${f.source==="form"?"留言反馈":"在线客服"}</b></div>
+      <div class="om-row"><span>类型</span><b>${escapeHtml(f.category||"其他")}</b></div>
+      <div class="om-row"><span>称呼</span><b>${escapeHtml(f.name||"匿名")}</b></div>
+      <div class="om-row"><span>联系</span><b>${escapeHtml(f.contact||"—")}</b></div>
+      <div class="section-sub">用户内容</div>
+      <div style="background:#f7f8fa;border-radius:10px;padding:12px 14px;font-size:14px;white-space:pre-wrap;line-height:1.6">${escapeHtml(f.message||"")}</div>
+      ${f.reply?`<div class="section-sub">当时 AI 回复</div>
+        <div style="background:#eef7f0;border-radius:10px;padding:12px 14px;font-size:14px;white-space:pre-wrap;line-height:1.6">${escapeHtml(f.reply)}</div>`:""}
+    `;
+    const acts = [];
+    if(f.status==="new") acts.push(`<button class="btn brand" data-fbdo="resolved">标记已处理</button>`);
+    else acts.push(`<button class="btn ghost" data-fbdo="new">恢复待处理</button>`);
+    acts.push(`<button class="btn danger" data-fbdo="delete">删除</button>`);
+    acts.push(`<button class="btn ghost" id="fb-close">关闭</button>`);
+    $("fb-actions").innerHTML = acts.join("");
+    $("fb-actions").querySelectorAll("[data-fbdo]").forEach(b=>b.addEventListener("click",()=>fbAction(f.id, b.dataset.fbdo)));
+    $("fb-close").addEventListener("click",()=>$("fb-mask").classList.remove("show"));
+    $("fb-mask").classList.add("show");
+  }
+  $("fb-mask").addEventListener("click",e=>{ if(e.target.id==="fb-mask") $("fb-mask").classList.remove("show"); });
+
+  async function fbAction(id, action){
+    if(action==="delete"){
+      if(!confirm("确定删除该反馈？此操作不可撤销。")) return;
+      const { error } = await sb.from("feedbacks").delete().eq("id", id);
+      if(error){ toast("删除失败：" + error.message); return; }
+      toast("已删除");
+    }else{
+      const { error } = await sb.from("feedbacks").update({ status:action }).eq("id", id);
+      if(error){ toast("操作失败：" + error.message); return; }
+      toast(action==="resolved" ? "已标记为已处理" : "已恢复待处理");
+    }
+    $("fb-mask").classList.remove("show");
+    loadFeedback();
+  }
+
+  /* ================= 客服知识库 ================= */
+  let faqEditingId = null;
+
+  async function loadFaqs(){
+    const box = $("faq-list");
+    const { data, error } = await sb.from("faqs").select("*").order("sort",{ascending:true});
+    if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
+    const list = data || [];
+    if(!list.length){ box.innerHTML = `<div class="empty-state">还没有问答，点击右上角「+ 新增问答」。</div>`; return; }
+    box.innerHTML = `<table><thead><tr>
+      <th>触发关键词</th><th>回复内容</th><th>分类</th><th>状态</th><th>排序</th><th>操作</th>
+    </tr></thead><tbody>${list.map(faqRow).join("")}</tbody></table>`;
+    box.querySelectorAll("[data-faqedit]").forEach(b=>b.addEventListener("click",()=>openFaq(list.find(x=>x.id===b.dataset.faqedit))));
+    box.querySelectorAll("[data-faqdel]").forEach(b=>b.addEventListener("click",()=>delFaq(b.dataset.faqdel)));
+  }
+
+  function faqRow(r){
+    const st = r.enabled ? `<span class="pill st-resolved">启用</span>` : `<span class="pill">停用</span>`;
+    return `<tr>
+      <td><div class="fb-msg">${escapeHtml(r.keywords||"")}</div></td>
+      <td><div class="fb-msg">${escapeHtml(r.answer||"")}</div></td>
+      <td><span class="pill fb-ask">${escapeHtml(r.category||"咨询")}</span></td>
+      <td>${st}</td>
+      <td>${r.sort}</td>
+      <td><div class="row-actions">
+        <button class="btn ghost sm" data-faqedit="${r.id}">编辑</button>
+        <button class="btn danger sm" data-faqdel="${r.id}">删除</button>
+      </div></td>
+    </tr>`;
+  }
+
+  function setFaq(r){
+    $("faq-keywords").value = r.keywords || "";
+    $("faq-answer").value   = r.answer || "";
+    $("faq-category").value = r.category || "咨询";
+    $("faq-sort").value     = r.sort != null ? r.sort : 100;
+    $("faq-enabled").checked = r.enabled !== false;
+  }
+  function openFaqAdd(){
+    faqEditingId = null;
+    $("faq-title").textContent = "新增问答";
+    setFaq({ keywords:"", answer:"", category:"咨询", sort:100, enabled:true });
+    $("faq-mask").classList.add("show");
+  }
+  function openFaq(r){
+    faqEditingId = r.id;
+    $("faq-title").textContent = "编辑问答";
+    setFaq(r);
+    $("faq-mask").classList.add("show");
+  }
+
+  $("add-faq").addEventListener("click", openFaqAdd);
+  $("faq-cancel").addEventListener("click", ()=>$("faq-mask").classList.remove("show"));
+  $("faq-mask").addEventListener("click", e=>{ if(e.target.id==="faq-mask") $("faq-mask").classList.remove("show"); });
+
+  $("faq-save").addEventListener("click", async ()=>{
+    const keywords = $("faq-keywords").value.trim();
+    const answer   = $("faq-answer").value.trim();
+    if(!keywords){ toast("请填写触发关键词"); return; }
+    if(!answer){ toast("请填写回复内容"); return; }
+    const btn = $("faq-save"); btn.disabled = true; btn.textContent = "保存中…";
+    const row = {
+      keywords, answer,
+      category: $("faq-category").value,
+      sort: parseInt($("faq-sort").value,10) || 100,
+      enabled: $("faq-enabled").checked
+    };
+    let res;
+    if(faqEditingId) res = await sb.from("faqs").update(row).eq("id", faqEditingId);
+    else            res = await sb.from("faqs").insert(row);
+    btn.disabled = false; btn.textContent = "保存";
+    if(res.error){ toast("保存失败：" + res.error.message); return; }
+    toast(faqEditingId ? "已更新" : "已新增");
+    $("faq-mask").classList.remove("show");
+    loadFaqs();
+  });
+
+  async function delFaq(id){
+    if(!confirm("确定删除该问答？删除后前台客服将不再使用此话术。")) return;
+    const { error } = await sb.from("faqs").delete().eq("id", id);
+    if(error){ toast("删除失败：" + error.message); return; }
+    toast("已删除"); loadFaqs();
+  }
+
+  /* ================= 账号管理 ================= */
+  async function loadAccounts(){
+    const box = $("account-list");
+    const { data, error } = await sb.from("profiles")
+      .select("id,email,display_name,is_admin,created_at")
+      .order("created_at",{ascending:true});
+    if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
+    if(!data || !data.length){ box.innerHTML = `<div class="empty-state">暂无账号。</div>`; return; }
+    box.innerHTML = `<table><thead><tr>
+      <th>用户</th><th>邮箱</th><th>身份</th><th>注册时间</th><th>操作</th>
+    </tr></thead><tbody>${data.map(accRow).join("")}</tbody></table>`;
+    box.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>toggleAdmin(b.dataset.toggle, b.dataset.to==="1")));
+  }
+
+  function accRow(u){
+    const isMe = u.id===meId;
+    const badge = u.is_admin ? `<span class="pill tag">管理员</span>` : `<span class="pill">普通用户</span>`;
+    let action;
+    if(isMe){
+      action = `<span style="color:#8a93a6;font-size:13px">当前登录账号</span>`;
+    }else if(u.is_admin){
+      action = `<button class="btn danger sm" data-toggle="${u.id}" data-to="0">取消管理员</button>`;
+    }else{
+      action = `<button class="btn brand sm" data-toggle="${u.id}" data-to="1">设为管理员</button>`;
+    }
+    return `<tr>
+      <td class="pname">${escapeHtml(u.display_name||"—")}</td>
+      <td><span class="pid">${escapeHtml(u.email||"")}</span></td>
+      <td>${badge}</td>
+      <td style="color:#8a93a6">${u.created_at?new Date(u.created_at).toLocaleString():"—"}</td>
+      <td><div class="row-actions">${action}</div></td>
+    </tr>`;
+  }
+
+  async function toggleAdmin(id, makeAdmin){
+    if(!confirm(makeAdmin ? "确定授予该账号管理员权限？" : "确定取消该账号的管理员权限？")) return;
+    const { error } = await sb.from("profiles").update({ is_admin: makeAdmin }).eq("id", id);
+    if(error){ toast("操作失败：" + error.message); return; }
+    toast(makeAdmin ? "已设为管理员" : "已取消管理员");
+    loadAccounts();
+  }
+
+  $("refresh-accounts").addEventListener("click", loadAccounts);
+
   /* ================= 启动 ================= */
   (async function init(){
     const session = await requireAuth();
@@ -340,5 +631,7 @@
     loadProductList();
     loadContentFields();
     loadOrders();
+    loadFeedback();
+    loadFaqs();
   })();
 })();

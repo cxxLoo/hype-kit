@@ -31,9 +31,17 @@
 <script src="../js/config.js"></script>
 <script>
 (async function(){
-  // 已登录则直接进后台
+  async function checkAdmin(){
+    const { data } = await sb.rpc("is_admin");
+    return data === true;
+  }
+
+  // 已登录：是管理员才进后台，否则登出
   const { data:{ session } } = await sb.auth.getSession();
-  if(session){ location.replace("index.html"); return; }
+  if(session){
+    if(await checkAdmin()){ location.replace("index.html"); return; }
+    await sb.auth.signOut();
+  }
 
   const form = document.getElementById("login-form");
   const err = document.getElementById("err");
@@ -46,9 +54,12 @@
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ btn.disabled = false; btn.textContent = "登录"; err.textContent = "登录失败：" + error.message; return; }
+    // 校验管理员身份
+    if(await checkAdmin()){ location.replace("index.html"); return; }
+    await sb.auth.signOut();
     btn.disabled = false; btn.textContent = "登录";
-    if(error){ err.textContent = "登录失败：" + error.message; return; }
-    location.replace("index.html");
+    err.textContent = "该账号不是管理员，无权登录后台";
   });
 })();
 </script>

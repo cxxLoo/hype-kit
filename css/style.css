@@ -36,6 +36,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .cart-link{position:relative}
 .cart-count{position:absolute;top:2px;right:2px;background:var(--black);color:#fff;font-size:11px;
   min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.nav-account{font-size:14px;font-weight:600;padding:8px 14px;border-radius:20px;border:1px solid var(--line);
+  white-space:nowrap;transition:.15s}
+.nav-account:hover{background:#f5f5f5}
 
 /* ========== 通用标题 ========== */
 .section{padding:64px 0}
@@ -214,3 +217,55 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
   .hero h1{font-size:44px}
   .foot-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ========== 客服中心 ========== */
+.cs-wrap{display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start}
+.cs-chat{border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
+  height:620px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.05)}
+.cs-head{display:flex;align-items:center;gap:12px;padding:16px 20px;
+  background:linear-gradient(90deg,#0a2d5c,#b1131a);color:#fff}
+.cs-head .ava{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;
+  align-items:center;justify-content:center;font-size:22px;flex:none}
+.cs-head .info b{font-size:16px;font-weight:700;display:block;line-height:1.2}
+.cs-head .info span{font-size:12px;opacity:.85;display:inline-flex;align-items:center;gap:6px}
+.cs-head .dot{width:8px;height:8px;border-radius:50%;background:#3ad07a;display:inline-block}
+.cs-body{flex:1;overflow-y:auto;padding:20px;background:#f7f8fa;display:flex;flex-direction:column;gap:14px}
+.cs-row{display:flex;gap:10px;align-items:flex-end;max-width:82%}
+.cs-row.me{align-self:flex-end;flex-direction:row-reverse}
+.cs-row .mini{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:16px;background:#fff;border:1px solid var(--line)}
+.cs-row.me .mini{background:#111;color:#fff;border-color:#111}
+.bubble{padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap;
+  word-break:break-word;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.cs-row.bot .bubble{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.cs-row.me .bubble{background:#111;color:#fff;border-bottom-right-radius:4px}
+.cs-time{font-size:11px;color:var(--gray);margin:2px 6px 0}
+.typing span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:#bbb;
+  animation:csbl 1s infinite ease-in-out}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes csbl{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.cs-quick{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:#fff}
+.cs-chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font-size:13px;
+  color:#333;cursor:pointer;transition:.12s}
+.cs-chip:hover{border-color:#111;background:#f5f5f5}
+.cs-input{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--line);background:#fff}
+.cs-input input{flex:1;border:1px solid var(--line);border-radius:24px;padding:12px 18px;font-size:14px;outline:none}
+.cs-input input:focus{border-color:#111}
+.cs-input .send{background:#111;color:#fff;border-radius:24px;padding:0 24px;font-weight:600;font-size:14px}
+.cs-input .send:hover{background:#333}
+.cs-input .send:disabled{opacity:.5;cursor:not-allowed}
+
+/* 留言反馈卡片 */
+.cs-form{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff}
+.cs-form h3{font-size:18px;font-weight:800;margin-bottom:4px}
+.cs-form .fdesc{color:var(--gray);font-size:13px;margin-bottom:18px}
+.cs-form select{width:100%;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:14px;
+  outline:none;font-family:inherit;background:#fff}
+.cs-form select:focus{border-color:#111}
+.cs-ok{color:#0f8a44;font-size:13px;margin-top:10px;min-height:16px}
+
+@media(max-width:900px){
+  .cs-wrap{grid-template-columns:1fr}
+  .cs-chat{height:520px}
+}
+

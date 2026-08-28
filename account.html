@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>登录 / 注册 · HYPE KIT</title>
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+<div class="auth">
+  <!-- 左侧品牌 -->
+  <div class="auth-left">
+    <div class="brand">
+      <span class="mk"><svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg"><path d="M40 150 C60 60 200 -10 620 20 C300 60 180 120 120 150 C90 165 55 165 40 150 Z" fill="#241b4d"/></svg></span>
+      <span class="tx"><b>HYPE KIT</b><span>FOR FANS</span></span>
+    </div>
+    <div class="glow g2"></div>
+    <div class="glow g1"></div>
+    <div class="tagline">
+      <h2>设计属于你的<br>专属战袍</h2>
+      <p>登录后同步你的定制方案与订单，球场之上，由你定义。</p>
+    </div>
+  </div>
+
+  <!-- 右侧表单 -->
+  <div class="auth-right">
+    <a class="backhome" href="index.html">← 返回首页</a>
+
+    <!-- 登录/注册表单 -->
+    <form class="auth-card" id="auth-form">
+      <h1 id="a-title">登录</h1>
+
+      <div class="afield">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <input type="email" id="a-email" autocomplete="username" required placeholder="邮箱">
+      </div>
+
+      <div class="afield">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+        <input type="password" id="a-pass" autocomplete="current-password" required placeholder="密码">
+        <span class="eye" id="a-eye"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      </div>
+
+      <div class="afield" id="a-pass2-wrap" style="display:none">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+        <input type="password" id="a-pass2" autocomplete="new-password" placeholder="再次输入密码">
+      </div>
+
+      <label class="agree">
+        <input type="checkbox" id="a-agree">
+        <span>登录/注册视为您已阅读并同意 <a href="#">用户协议</a>、<a href="#">隐私政策</a> 和 <a href="#">使用条款</a></span>
+      </label>
+
+      <button class="abtn" type="submit" id="a-submit">登 录</button>
+
+      <div class="alinks">
+        <a id="a-toggle">注册新用户</a>
+        <span class="sep">|</span>
+        <a id="a-forgot">忘记密码?</a>
+      </div>
+      <div class="aerr" id="a-err"></div>
+      <div class="aok" id="a-ok"></div>
+    </form>
+
+    <!-- 已登录 -->
+    <div class="auth-card logged" id="logged" style="display:none">
+      <div class="ava" id="l-ava">U</div>
+      <h1 id="l-name">你好</h1>
+      <div class="mail" id="l-mail"></div>
+      <div class="role" id="l-role">普通用户</div>
+      <div class="row">
+        <a class="abtn" style="display:flex;align-items:center;justify-content:center;letter-spacing:0" href="index.html">进入网站</a>
+        <a class="ghostbtn" style="display:flex;align-items:center;justify-content:center" href="orders.html">我的订单</a>
+        <a class="ghostbtn" id="l-admin" style="display:none;align-items:center;justify-content:center" href="admin/index.html">进入管理后台</a>
+        <button class="ghostbtn" id="l-logout">退出登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script>
+(async function(){
+  const $ = (id)=>document.getElementById(id);
+  let mode = "login"; // login | register
+
+  // 已登录 → 显示账号信息
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ await showLogged(session.user); return; }
+
+  // 密码可见切换
+  $("a-eye").addEventListener("click", ()=>{
+    const p=$("a-pass"); p.type = p.type==="password" ? "text" : "password";
+  });
+
+  // 登录/注册切换
+  $("a-toggle").addEventListener("click", ()=>{
+    mode = mode==="login" ? "register" : "login";
+    const reg = mode==="register";
+    $("a-title").textContent = reg ? "注册新用户" : "登录";
+    $("a-submit").textContent = reg ? "注 册" : "登 录";
+    $("a-pass2-wrap").style.display = reg ? "" : "none";
+    $("a-toggle").textContent = reg ? "已有账号，去登录" : "注册新用户";
+    $("a-pass").setAttribute("autocomplete", reg ? "new-password" : "current-password");
+    clearMsg();
+  });
+
+  // 忘记密码
+  $("a-forgot").addEventListener("click", async ()=>{
+    const email = $("a-email").value.trim();
+    if(!email){ err("请先在上方输入邮箱，再点忘记密码"); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    if(error){ err("发送失败：" + error.message); return; }
+    ok("重置密码邮件已发送，请查收邮箱");
+  });
+
+  // 提交
+  $("auth-form").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    clearMsg();
+    if(!$("a-agree").checked){ err("请先勾选同意用户协议"); return; }
+    const email = $("a-email").value.trim();
+    const pass  = $("a-pass").value;
+    const btn = $("a-submit"); btn.disabled = true; const t = btn.textContent; btn.textContent = "处理中…";
+    try{
+      if(mode==="login"){
+        const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+        if(error) throw error;
+        const { data:{ user } } = await sb.auth.getUser();
+        redirectAfter(user);
+      }else{
+        if(pass.length < 6){ throw new Error("密码至少 6 位"); }
+        if(pass !== $("a-pass2").value){ throw new Error("两次输入的密码不一致"); }
+        const { data, error } = await sb.auth.signUp({
+          email, password:pass,
+          options:{ data:{ display_name: email.split("@")[0] } }
+        });
+        if(error) throw error;
+        if(data.session){ redirectAfter(data.user); }         // 未开邮箱验证 → 直接登录
+        else { ok("注册成功！请到邮箱点击确认链接后再登录。"); btn.disabled=false; btn.textContent=t; }
+      }
+    }catch(err2){
+      err(translate(err2.message)); btn.disabled=false; btn.textContent=t;
+    }
+  });
+
+  function redirectAfter(){
+    const back = new URLSearchParams(location.search).get("redirect");
+    location.href = back || "index.html";
+  }
+
+  async function showLogged(user){
+    $("auth-form").style.display = "none";
+    $("logged").style.display = "";
+    let name = (user.user_metadata && user.user_metadata.display_name) || user.email.split("@")[0];
+    let isAdmin = false;
+    try{
+      const { data } = await sb.from("profiles").select("display_name,is_admin").eq("id", user.id).single();
+      if(data){ name = data.display_name || name; isAdmin = !!data.is_admin; }
+    }catch(e){}
+    $("l-ava").textContent = (name[0]||"U").toUpperCase();
+    $("l-name").textContent = "你好，" + name;
+    $("l-mail").textContent = user.email;
+    $("l-role").textContent = isAdmin ? "管理员" : "普通用户";
+    if(isAdmin) $("l-admin").style.display = "flex";
+    $("l-logout").addEventListener("click", async ()=>{ await sb.auth.signOut(); location.reload(); });
+  }
+
+  function err(m){ $("a-err").textContent = m; $("a-ok").textContent=""; }
+  function ok(m){ $("a-ok").textContent = m; $("a-err").textContent=""; }
+  function clearMsg(){ $("a-err").textContent=""; $("a-ok").textContent=""; }
+  function translate(m){
+    if(/Invalid login credentials/i.test(m)) return "邮箱或密码错误";
+    if(/User already registered/i.test(m))   return "该邮箱已注册，请直接登录";
+    if(/should be at least/i.test(m))         return "密码太短，至少 6 位";
+    return m;
+  }
+})();
+</script>
+</body>
+</html>

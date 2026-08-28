@@ -31,6 +31,18 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>
         <span>订单管理</span>
       </div>
+      <div class="tab" data-tab="feedback" data-crumb="用户反馈">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg>
+        <span>用户反馈</span>
+      </div>
+      <div class="tab" data-tab="faqs" data-crumb="客服知识库">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 2.5"/><path d="M12 17h.01"/></svg>
+        <span>客服知识库</span>
+      </div>
+      <div class="tab" data-tab="accounts" data-crumb="账号管理">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M17 8l2 2 3-3.5"/></svg>
+        <span>账号管理</span>
+      </div>
     </nav>
     <div class="side-foot">
       <a class="btn ghost sm block" href="../index.html" target="_blank">查看网站 ↗</a>
@@ -116,6 +128,81 @@
             </div>
           </div>
           <div id="order-list"><div class="loading">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 用户反馈 -->
+      <section id="tab-feedback" style="display:none">
+        <div class="stats four">
+          <div class="stat-card">
+            <div class="ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg></div>
+            <div><div class="lbl">反馈总数</div><div class="num" id="fb-total">–</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+            <div><div class="lbl">今日新增</div><div class="num" id="fb-today">–</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+            <div><div class="lbl">待处理</div><div class="num" id="fb-pending">–</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+            <div><div class="lbl">已处理</div><div class="num" id="fb-resolved">–</div></div>
+          </div>
+        </div>
+
+        <div class="ops-grid">
+          <div class="panel">
+            <div class="bar"><h2>近 7 天反馈趋势</h2></div>
+            <div class="trend" id="fb-trend"><div class="loading">加载中…</div></div>
+          </div>
+          <div class="panel">
+            <div class="bar"><h2>反馈类型分布</h2></div>
+            <div id="fb-cats"><div class="loading">加载中…</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="bar">
+            <h2>反馈列表</h2>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <input class="fb-search" id="fb-search" placeholder="搜索内容 / 联系方式…">
+              <button class="btn ghost sm" id="fb-refresh">刷新</button>
+            </div>
+          </div>
+          <div class="chips" id="fb-filter" style="margin-bottom:16px">
+            <button class="chip on" data-f="all">全部</button>
+            <button class="chip" data-f="new">待处理</button>
+            <button class="chip" data-f="resolved">已处理</button>
+            <button class="chip" data-f="chat">来自客服</button>
+            <button class="chip" data-f="form">来自留言</button>
+          </div>
+          <div id="feedback-list"><div class="loading">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 客服知识库 -->
+      <section id="tab-faqs" style="display:none">
+        <div class="panel">
+          <div class="bar">
+            <h2>客服知识库</h2>
+            <button class="btn brand" id="add-faq">+ 新增问答</button>
+          </div>
+          <p class="hint" style="margin-bottom:14px">维护智能客服的自动回复：用户消息命中任一「关键词」即返回对应「回复」。保存后前台客服自动生效。</p>
+          <div id="faq-list"><div class="loading">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 账号管理 -->
+      <section id="tab-accounts" style="display:none">
+        <div class="panel">
+          <div class="bar">
+            <h2>账号管理</h2>
+            <button class="btn ghost" id="refresh-accounts">刷新</button>
+          </div>
+          <p class="hint" style="margin-bottom:14px">这里管理所有注册用户，可授予 / 取消「管理员」身份。管理员才能登录本后台。</p>
+          <div id="account-list"><div class="loading">加载中…</div></div>
         </div>
       </section>
 
@@ -206,6 +293,48 @@
     <h3 id="om-title">订单详情</h3>
     <div id="om-body"></div>
     <div class="modal-actions" id="om-actions"></div>
+  </div>
+</div>
+
+<!-- 反馈详情弹窗 -->
+<div class="mask" id="fb-mask">
+  <div class="modal">
+    <h3 id="fb-title">反馈详情</h3>
+    <div id="fb-body"></div>
+    <div class="modal-actions" id="fb-actions"></div>
+  </div>
+</div>
+
+<!-- 知识库编辑弹窗 -->
+<div class="mask" id="faq-mask">
+  <div class="modal">
+    <h3 id="faq-title">编辑问答</h3>
+    <div class="fld">
+      <label>触发关键词（用逗号或空格分隔，命中任一即回复）</label>
+      <input id="faq-keywords" placeholder="如：尺码,尺寸,size,多大">
+    </div>
+    <div class="grid2">
+      <div class="fld"><label>分类</label>
+        <select id="faq-category">
+          <option value="咨询">咨询</option>
+          <option value="售后">售后</option>
+          <option value="投诉">投诉</option>
+          <option value="建议">建议</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="fld"><label>排序（数字越小越靠前）</label><input id="faq-sort" type="number" value="100"></div>
+    </div>
+    <div class="fld"><label>回复内容（支持多行）</label><textarea id="faq-answer" style="min-height:130px"></textarea></div>
+    <div class="fld">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="faq-enabled" checked style="width:auto"> 启用此问答
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="faq-cancel">取消</button>
+      <button class="btn brand" id="faq-save">保存</button>
+    </div>
   </div>
 </div>
 

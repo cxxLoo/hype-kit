@@ -132,3 +132,20 @@ python -m http.server 8080
 - **后台登录报错 Invalid login credentials？** 账号没建或密码错；确认在 Authentication→Users 里存在且已 Confirm。
 - **图片传不上去？** 确认 SQL 已执行（桶 `assets` 及策略已建），且当前处于登录态。
 - **本地打开报跨域？** 用静态服务器访问，不要用 `file://` 双击打开。
+
+## SQL 执行顺序（重要）
+
+在 Supabase → SQL Editor 里，按顺序各执行一次：
+
+1. `supabase/schema.sql` —— 商品 / 文案表 + 图片桶
+2. `supabase/orders.sql` —— 订单表 + 游客下单 RPC
+3. `supabase/accounts.sql` —— 用户资料 / 管理员角色（末尾把你的邮箱设为 is_admin）
+4. `supabase/feedback.sql` —— **用户反馈表**（客服中心 + 后台反馈模块用）
+   - 依赖第 3 步的 `is_admin()` 函数，务必先跑 accounts.sql。
+
+## 客服中心 & 用户反馈
+
+- 前台导航新增「客服中心」（`service.html`）：内置智能规则客服，温柔话术，7×24 秒回；每条对话与「留言反馈」都会写入 `feedbacks` 表。
+- 权限：**任何访客都能提交反馈**，但**只有管理员**能在后台查看/处理（RLS 保证）。
+- 后台新增「用户反馈」模块：反馈总数 / 今日 / 待处理 / 已处理统计卡、近 7 天趋势柱状图、反馈类型分布、筛选搜索、查看详情、标记已处理 / 删除。
+

@@ -126,7 +126,7 @@ tbody tr:last-child td{border-bottom:none}
 .thumb svg,.thumb img{width:88%;height:88%;object-fit:contain}
 .pid{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--muted)}
 .pname{font-weight:600}
-.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#eef0f2;color:#555}
 .pill.cat{background:#eef2ff;color:#3b6fe0}
 .pill.cat.shoe{background:#f3eefc;color:#7c4fdb}
 .pill.tag{background:var(--brand-soft);color:var(--brand-ink)}
@@ -181,10 +181,48 @@ tbody tr:last-child td{border-bottom:none}
 .om-track:focus{border-color:var(--brand)}
 #om-actions{flex-wrap:wrap;align-items:center}
 
+/* ================= 用户反馈模块 ================= */
+.stats.four{grid-template-columns:repeat(4,1fr)}
+.ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+
+/* 近7天趋势柱状图 */
+.trend{display:flex;align-items:flex-end;gap:10px;height:190px;padding:6px 2px}
+.tbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;height:100%}
+.tbar .v{font-size:12px;font-weight:700;color:var(--ink)}
+.tbar .bar{width:62%;max-width:36px;min-height:4px;border-radius:7px 7px 0 0;
+  background:linear-gradient(180deg,#34d17f,#16a34a);transition:height .4s ease}
+.tbar .d{font-size:11px;color:var(--muted)}
+
+/* 分类分布条 */
+.cat-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cat-row .nm{width:52px;font-size:13px;font-weight:600;color:#4a5163;flex:none}
+.cat-row .track{flex:1;height:11px;background:#f0f2f6;border-radius:6px;overflow:hidden}
+.cat-row .fill{height:100%;border-radius:6px;background:var(--brand);transition:width .5s ease}
+.cat-row .ct{width:36px;text-align:right;font-size:13px;font-weight:700;flex:none}
+
+/* 搜索框 */
+.fb-search{border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:13px;outline:none;
+  min-width:200px;font-family:inherit}
+.fb-search:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+
+/* 反馈分类 / 来源 / 状态标签 */
+.pill.fb-ask{background:#eef2ff;color:#3b6fe0}
+.pill.fb-after{background:#fff3e0;color:#e07b00}
+.pill.fb-complain{background:#fdecec;color:#e0342b}
+.pill.fb-suggest{background:var(--brand-soft);color:var(--brand-ink)}
+.pill.fb-other{background:#eef0f2;color:#555}
+.pill.src-chat{background:#eaf3ff;color:#2f6bd8}
+.pill.src-form{background:#f3eefc;color:#7c4fdb}
+.pill.st-new{background:#fff3e0;color:#e07b00}
+.pill.st-resolved{background:var(--brand-soft);color:var(--brand-ink)}
+.fb-msg{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3a4152}
+
 @media(max-width:880px){
   .sidebar{width:64px}
   .side-logo .txt,.side-nav .navlbl,.tab span{display:none}
   .tab{justify-content:center}
   .stats{grid-template-columns:1fr}
+  .stats.four{grid-template-columns:1fr 1fr}
+  .ops-grid{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
 }
