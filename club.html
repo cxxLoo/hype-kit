@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>球迷俱乐部 · HYPE KIT</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="css/style.css?v=20260828">
 </head>
 <body>
@@ -44,6 +45,7 @@
       <div class="pd-tags" id="pd-tags"></div>
       <div class="pd-like">
         <button class="like-btn" id="pd-like"><span class="hrt">♡</span> <span id="pd-like-n">0</span></button>
+        <button class="like-btn" id="pd-fav"><span class="hrt">♡</span> 收藏</button>
       </div>
       <div class="cmt-head">评论 <span id="pd-cmt-n">0</span></div>
       <div class="cmt-list" id="cmt-list"></div>
@@ -173,8 +175,10 @@
   function renderFeed(){
     if(!posts.length){ $("feed").innerHTML = `<div class="feed-empty">还没有分享，快来发第一篇吧～</div>`; return; }
     const liked = likedSet();
+    const favd = new Set(Favs.list("post"));
     $("feed").innerHTML = posts.map(p=>`
       <article class="pcard" data-id="${p.id}">
+        <button class="fav-btn ${favd.has(p.id)?'on':''}" data-favpost="${p.id}" title="收藏">${HEART}</button>
         ${coverHtml(p)}
         <div class="pc-body">
           <h4 class="pc-title">${escapeHtml(p.title)}</h4>
@@ -187,10 +191,10 @@
         </div>
       </article>`).join("");
 
-    // 卡片点击进详情（排除点赞按钮）
+    // 卡片点击进详情（排除点赞/收藏按钮）
     $("feed").querySelectorAll(".pcard").forEach(card=>{
       card.addEventListener("click", e=>{
-        if(e.target.closest("[data-like]")) return;
+        if(e.target.closest("[data-like]") || e.target.closest("[data-favpost]")) return;
         openDetail(card.dataset.id);
       });
     });
@@ -198,6 +202,20 @@
     $("feed").querySelectorAll("[data-like]").forEach(b=>{
       b.addEventListener("click", ()=>toggleLike(b.dataset.like, b));
     });
+    // 收藏
+    $("feed").querySelectorAll("[data-favpost]").forEach(b=>{
+      b.addEventListener("click", e=>{ e.stopPropagation(); toggleFav(b.dataset.favpost, b); });
+    });
+  }
+  const HEART = `<svg viewBox="0 0 24 24"><path d="M12 20.5S3.5 15 3.5 8.9C3.5 6.1 5.7 4 8.3 4c1.7 0 3 .9 3.7 2 .7-1.1 2-2 3.7-2 2.6 0 4.8 2.1 4.8 4.9C20.5 15 12 20.5 12 20.5z"/></svg>`;
+  function toggleFav(id, btnEl){
+    const on = Favs.toggle("post", id);
+    document.querySelectorAll(`[data-favpost="${id}"]`).forEach(b=>b.classList.toggle("on", on));
+    if(detailId===id){
+      $("pd-fav").classList.toggle("on", on);
+      $("pd-fav").querySelector(".hrt").textContent = on ? "♥" : "♡";
+    }
+    toast(on ? "已收藏" : "已取消收藏");
   }
 
   /* ---------- 点赞 / 取消赞（乐观更新） ---------- */
@@ -252,6 +270,9 @@
     $("pd-like").classList.toggle("on", liked);
     $("pd-like").querySelector(".hrt").textContent = liked?"♥":"♡";
     $("pd-like-n").textContent = p.likes;
+    const favd = Favs.has("post", id);
+    $("pd-fav").classList.toggle("on", favd);
+    $("pd-fav").querySelector(".hrt").textContent = favd?"♥":"♡";
     $("pd-cmt-n").textContent = p.comment_count;
     $("cmt-list").innerHTML = `<div class="cmt-empty">加载评论中…</div>`;
     openMask("post-mask");
@@ -271,6 +292,7 @@
       </div>`).join("");
   }
   $("pd-like").addEventListener("click", ()=>{ if(detailId) toggleLike(detailId, $("pd-like")); });
+  $("pd-fav").addEventListener("click", ()=>{ if(detailId) toggleFav(detailId, $("pd-fav")); });
 
   $("cmt-form").addEventListener("submit", async e=>{
     e.preventDefault();
@@ -382,6 +404,15 @@
   }));
 
   await loadFeed();
+
+  // 深链：从收藏页 ?post=<id> 直接打开帖子详情
+  const pid = new URLSearchParams(location.search).get("post");
+  if(pid){
+    if(!posts.find(p=>p.id===pid)){
+      try{ const { data } = await sb.from("posts").select("*").eq("id", pid).single(); if(data) posts.push(data); }catch(e){}
+    }
+    if(posts.find(p=>p.id===pid)) openDetail(pid);
+  }
 })();
 </script>
 </body>

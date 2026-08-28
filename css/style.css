@@ -350,7 +350,7 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
 @media(max-width:760px){.feed{column-count:2;column-gap:10px}}
 .feed-empty{color:var(--gray);padding:48px 0;text-align:center}
 
-.pcard{break-inside:avoid;width:100%;margin:0 0 16px;border:1px solid var(--line);border-radius:14px;
+.pcard{break-inside:avoid;position:relative;width:100%;margin:0 0 16px;border:1px solid var(--line);border-radius:14px;
   overflow:hidden;background:#fff;cursor:pointer;transition:transform .16s,box-shadow .16s}
 .pcard:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.08)}
 .pc-cover{position:relative;width:100%;background:#f5f5f5;overflow:hidden}
@@ -499,4 +499,62 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
   .mh-title{font-size:38px}
   .mh-sub{font-size:15px}
 }
+
+/* ================= 账户下拉 + 头像 ================= */
+.acct{position:relative}
+.acct-btn{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:26px;border:1px solid var(--line);
+  background:#fff;transition:.15s;max-width:190px}
+.acct-btn:hover{border-color:#111}
+.acct-ava{width:32px;height:32px;border-radius:50%;color:#fff;font-weight:700;font-size:14px;flex:0 0 auto;
+  display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+.acct-ava img{width:100%;height:100%;object-fit:cover}
+.acct-ava.lg{width:46px;height:46px;font-size:18px}
+.acct-name{font-size:14px;font-weight:600;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-caret{color:#888;transition:.2s;flex:0 0 auto}
+.acct.open .acct-caret{transform:rotate(180deg)}
+.acct-menu{position:absolute;right:0;top:calc(100% + 10px);width:236px;background:#fff;border:1px solid var(--line);
+  border-radius:14px;box-shadow:0 18px 44px rgba(0,0,0,.16);padding:8px;opacity:0;visibility:hidden;
+  transform:translateY(-6px);transition:.16s;z-index:120}
+.acct.open .acct-menu{opacity:1;visibility:visible;transform:translateY(0)}
+.acct-head{display:flex;align-items:center;gap:12px;padding:10px 10px 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.acct-meta{min-width:0}
+.acct-meta b{display:block;font-size:15px}
+.acct-meta span{display:block;font-size:12px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.acct-menu a,.acct-menu button{display:block;width:100%;text-align:left;padding:11px 12px;border-radius:9px;
+  font-size:14px;color:#333;transition:.12s}
+.acct-menu a:hover,.acct-menu button:hover{background:#f5f5f5}
+.acct-menu #acct-logout{color:var(--sale);border-top:1px solid var(--line);margin-top:6px;border-radius:0}
+
+.fav-count{position:absolute;top:2px;right:2px;background:var(--black);color:#fff;font-size:11px;
+  min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 4px}
+
+/* ================= 卡片收藏按钮 ================= */
+.fav-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.94);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.14);z-index:3;transition:.14s}
+.fav-btn:hover{transform:scale(1.1)}
+.fav-btn svg{width:18px;height:18px;fill:none;stroke:#111;stroke-width:2}
+.fav-btn.on svg{fill:var(--sale);stroke:var(--sale)}
+
+/* ================= 收藏页 ================= */
+.fav-empty{text-align:center;padding:70px 0;color:var(--gray)}
+.fav-empty h3{color:#111;font-size:20px;margin-bottom:8px}
+
+/* ================= 个人中心 ================= */
+.prof-wrap{max-width:640px;margin:0 auto}
+.prof-card{border:1px solid var(--line);border-radius:16px;padding:30px;margin-bottom:24px}
+.prof-card h3{font-size:18px;font-weight:800;margin-bottom:22px}
+.prof-ava-row{display:flex;align-items:center;gap:22px;margin-bottom:24px}
+.prof-ava{width:88px;height:88px;border-radius:50%;color:#fff;font-weight:800;font-size:34px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+.prof-ava img{width:100%;height:100%;object-fit:cover}
+.prof-upload{font-size:13px;color:#333;border:1px solid var(--line);border-radius:22px;padding:9px 16px;cursor:pointer;transition:.12s}
+.prof-upload:hover{border-color:#111}
+.prof-uphint{font-size:12px;color:var(--gray);margin-top:8px}
+.prof-field{margin-bottom:16px}
+.prof-field label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+.prof-field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
+.prof-field input:focus{border-color:#111}
+.prof-field input:disabled{background:#f7f7f7;color:#999}
+.prof-msg{font-size:13px;min-height:16px;margin-top:4px}
+@media(max-width:640px){ .acct-name{display:none} }
 

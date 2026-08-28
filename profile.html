@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>个人中心 · HYPE KIT</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css?v=20260828">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<section class="section">
+  <div class="container">
+    <h2>个人中心</h2>
+    <div class="sub">管理你的头像、昵称与登录密码。</div>
+
+    <div class="prof-wrap">
+      <!-- 个人信息 -->
+      <div class="prof-card">
+        <h3>个人信息</h3>
+        <div class="prof-ava-row">
+          <span class="prof-ava" id="prof-ava"></span>
+          <div>
+            <label class="prof-upload">上传头像
+              <input type="file" id="ava-file" accept="image/*" hidden>
+            </label>
+            <div class="prof-uphint">支持 JPG / PNG，建议正方形，≤ 2MB</div>
+          </div>
+        </div>
+        <div class="prof-field">
+          <label>昵称</label>
+          <input id="p-name" maxlength="20" placeholder="你的昵称">
+        </div>
+        <div class="prof-field">
+          <label>邮箱（不可修改）</label>
+          <input id="p-email" disabled>
+        </div>
+        <button class="btn dark" id="p-save">保存资料</button>
+        <div class="prof-msg" id="p-msg"></div>
+      </div>
+
+      <!-- 密码修改 -->
+      <div class="prof-card" id="password">
+        <h3>密码修改</h3>
+        <div class="prof-field">
+          <label>新密码</label>
+          <input type="password" id="pw1" autocomplete="new-password" placeholder="至少 6 位">
+        </div>
+        <div class="prof-field">
+          <label>确认新密码</label>
+          <input type="password" id="pw2" autocomplete="new-password" placeholder="再次输入新密码">
+        </div>
+        <button class="btn dark" id="pw-save">修改密码</button>
+        <div class="prof-msg" id="pw-msg"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js?v=20260828"></script>
+<script src="js/data.js?v=20260828"></script>
+<script src="js/shared.js?v=20260828"></script>
+<script>
+(async function(){
+  await loadContent();
+  mountChrome();
+
+  const $ = id=>document.getElementById(id);
+  function colorFromName(n){
+    const pool=["#b1131a","#0a2d5c","#e8467c","#c9a24a","#0a7a3f","#ff6a00","#1f6fe0","#7a3ff2"];
+    let h=0; for(const c of String(n||"")) h=(h*31+c.charCodeAt(0))>>>0; return pool[h%pool.length];
+  }
+  function initial(n){ return (String(n||"U").trim()[0]||"U").toUpperCase(); }
+
+  // 需登录
+  const { data:{ session } } = await sb.auth.getSession();
+  const user = session && session.user;
+  if(!user){ location.replace("account.html?redirect=profile.html"); return; }
+
+  let name = (user.user_metadata && user.user_metadata.display_name) || user.email.split("@")[0];
+  let avatar = "";
+  try{
+    const { data } = await sb.from("profiles").select("display_name,avatar_url").eq("id", user.id).single();
+    if(data){ name = data.display_name || name; avatar = data.avatar_url || ""; }
+  }catch(e){}
+
+  function paintAva(){
+    const el = $("prof-ava");
+    el.style.background = colorFromName(name);
+    el.innerHTML = avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : escapeHtml(initial(name));
+  }
+  $("p-name").value = name;
+  $("p-email").value = user.email;
+  paintAva();
+
+  /* 头像上传 */
+  $("ava-file").addEventListener("change", async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(!/^image\//.test(file.type)){ msg("p-msg", "请选择图片文件", false); return; }
+    if(file.size > 2*1024*1024){ msg("p-msg", "图片太大，请选择 2MB 以内的图片", false); return; }
+    msg("p-msg", "头像上传中…", true);
+    try{
+      const ext = (file.name.split(".").pop()||"jpg").toLowerCase();
+      const path = `avatars/${user.id}_${Date.now()}.${ext}`;
+      const up = await sb.storage.from(window.SB_BUCKET).upload(path, file, { upsert:true, cacheControl:"3600" });
+      if(up.error) throw up.error;
+      const { data } = sb.storage.from(window.SB_BUCKET).getPublicUrl(path);
+      avatar = data.publicUrl;
+      const { error } = await sb.from("profiles").update({ avatar_url: avatar }).eq("id", user.id);
+      if(error) throw error;
+      paintAva();
+      await refreshAccount();
+      msg("p-msg", "头像已更新 ✅", true);
+    }catch(err){ msg("p-msg", "上传失败：" + err.message, false); }
+  });
+
+  /* 保存昵称 */
+  $("p-save").addEventListener("click", async ()=>{
+    const v = $("p-name").value.trim();
+    if(!v){ msg("p-msg", "昵称不能为空", false); return; }
+    const btn = $("p-save"); btn.disabled = true; btn.textContent = "保存中…";
+    try{
+      const { error } = await sb.from("profiles").update({ display_name: v }).eq("id", user.id);
+      if(error) throw error;
+      await sb.auth.updateUser({ data:{ display_name: v } });
+      name = v; paintAva();
+      await refreshAccount();
+      msg("p-msg", "资料已保存 ✅", true);
+    }catch(err){ msg("p-msg", "保存失败：" + err.message, false); }
+    btn.disabled = false; btn.textContent = "保存资料";
+  });
+
+  /* 修改密码 */
+  $("pw-save").addEventListener("click", async ()=>{
+    const a = $("pw1").value, b = $("pw2").value;
+    if(a.length < 6){ msg("pw-msg", "新密码至少 6 位", false); return; }
+    if(a !== b){ msg("pw-msg", "两次输入的密码不一致", false); return; }
+    const btn = $("pw-save"); btn.disabled = true; btn.textContent = "修改中…";
+    try{
+      const { error } = await sb.auth.updateUser({ password: a });
+      if(error) throw error;
+      $("pw1").value = ""; $("pw2").value = "";
+      msg("pw-msg", "密码修改成功 ✅", true);
+    }catch(err){ msg("pw-msg", "修改失败：" + err.message, false); }
+    btn.disabled = false; btn.textContent = "修改密码";
+  });
+
+  function msg(id, text, ok){
+    const el = $(id); el.textContent = text; el.style.color = ok ? "#0f8a44" : "#f60c1a";
+  }
+})();
+</script>
+</body>
+</html>

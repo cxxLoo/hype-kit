@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>我的收藏 · HYPE KIT</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css?v=20260828">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<section class="section">
+  <div class="container">
+    <h2>我的收藏</h2>
+    <div class="sub">你心动的球衣、战靴与球迷分享，都收藏在这里。</div>
+
+    <div class="club-bar">
+      <div class="club-tabs">
+        <button class="ctab on" data-tab="product">商品收藏 <span id="c-product">0</span></button>
+        <button class="ctab" data-tab="post">帖子收藏 <span id="c-post">0</span></button>
+      </div>
+    </div>
+
+    <div id="pane-product"><div class="prod-grid" id="fav-products"></div></div>
+    <div id="pane-post" style="display:none"><div class="feed" id="fav-posts"></div></div>
+  </div>
+</section>
+
+<div id="footer-slot"></div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js?v=20260828"></script>
+<script src="js/data.js?v=20260828"></script>
+<script src="js/shared.js?v=20260828"></script>
+<script>
+(async function(){
+  await loadSiteData();
+  mountChrome();
+
+  const $ = id=>document.getElementById(id);
+  const heartSvg = `<svg viewBox="0 0 24 24"><path d="M12 20.5S3.5 15 3.5 8.9C3.5 6.1 5.7 4 8.3 4c1.7 0 3 .9 3.7 2 .7-1.1 2-2 3.7-2 2.6 0 4.8 2.1 4.8 4.9C20.5 15 12 20.5 12 20.5z"/></svg>`;
+
+  function colorFromName(n){
+    const pool=["#b1131a","#0a2d5c","#e8467c","#c9a24a","#0a7a3f","#ff6a00","#1f6fe0","#7a3ff2"];
+    let h=0; for(const c of String(n||"")) h=(h*31+c.charCodeAt(0))>>>0; return pool[h%pool.length];
+  }
+  function initial(n){ return (String(n||"?").trim()[0]||"?").toUpperCase(); }
+
+  /* ---------- 商品收藏 ---------- */
+  function renderProducts(){
+    const ids = Favs.list("product");
+    const items = ids.map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+    $("c-product").textContent = items.length;
+    if(!items.length){
+      $("fav-products").innerHTML = `<div class="fav-empty" style="grid-column:1/-1">
+        <h3>还没有收藏的商品</h3><p style="margin-bottom:20px">去商城逛逛，点右上角❤️收藏心仪单品。</p>
+        <a class="btn dark" href="jerseys.html">去逛球衣</a></div>`;
+      return;
+    }
+    $("fav-products").innerHTML = items.map(p=>`
+      <div class="card" data-id="${p.id}">
+        <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}
+          <button class="fav-btn on" data-fav="${p.id}" title="取消收藏">${heartSvg}</button>
+          ${productMedia(p)}</div>
+        <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
+        <div class="price">¥${p.price}</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn dark" style="flex:1;padding:10px;font-size:13px" data-add="${p.id}">加入购物袋</button>
+          <a class="btn" style="flex:1;padding:10px;font-size:13px;justify-content:center;border:1px solid #e5e5e5" href="customize.html?id=${p.id}">定制</a>
+        </div>
+      </div>`).join("");
+  }
+
+  /* ---------- 帖子收藏 ---------- */
+  async function renderPosts(){
+    const ids = Favs.list("post");
+    $("c-post").textContent = ids.length;
+    if(!ids.length){
+      $("fav-posts").innerHTML = `<div class="fav-empty" style="width:100%">
+        <h3>还没有收藏的帖子</h3><p style="margin-bottom:20px">去俱乐部发现好内容，点❤️收藏喜欢的分享。</p>
+        <a class="btn dark" href="club.html">去俱乐部</a></div>`;
+      return;
+    }
+    $("fav-posts").innerHTML = `<div class="feed-empty">加载中…</div>`;
+    const { data, error } = await sb.from("posts").select("*").in("id", ids);
+    if(error){ $("fav-posts").innerHTML = `<div class="feed-empty">加载失败</div>`; return; }
+    // 按收藏顺序排列
+    const map = {}; (data||[]).forEach(p=>map[p.id]=p);
+    const list = ids.map(id=>map[id]).filter(Boolean);
+    if(!list.length){ $("fav-posts").innerHTML = `<div class="feed-empty">收藏的帖子已不存在</div>`; return; }
+    $("fav-posts").innerHTML = list.map(p=>{
+      const cover = p.image_url
+        ? `<div class="pc-cover"><img src="${escapeHtml(p.image_url)}" alt="" loading="lazy"></div>`
+        : `<div class="pc-cover grad ${/^#(1|2|0)/.test(p.cover_color||"")?'on-dark':''}" style="--c:${p.cover_color||'#efe8ff'}"><span class="pc-emoji">${escapeHtml(p.emoji||"👕")}</span></div>`;
+      return `<a class="pcard" href="club.html?post=${p.id}">
+        ${cover}
+        <div class="pc-body">
+          <h4 class="pc-title">${escapeHtml(p.title)}</h4>
+          <div class="pc-foot">
+            <div class="pc-author"><span class="avatar sm" style="background:${p.avatar_color||'#7a3ff2'}">${escapeHtml(initial(p.author_name))}</span><span>${escapeHtml(p.author_name)}</span></div>
+            <button class="fav-btn on" style="position:static;box-shadow:none;width:auto;height:auto;background:none" data-favpost="${p.id}" title="取消收藏">${heartSvg}</button>
+          </div>
+        </div>
+      </a>`;
+    }).join("");
+  }
+
+  /* ---------- Tab 切换 ---------- */
+  document.querySelectorAll(".ctab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".ctab").forEach(x=>x.classList.remove("on"));
+    t.classList.add("on");
+    const isP = t.dataset.tab==="product";
+    $("pane-product").style.display = isP?"":"none";
+    $("pane-post").style.display = isP?"none":"";
+    if(!isP) renderPosts();
+  }));
+
+  /* ---------- 事件委托 ---------- */
+  document.body.addEventListener("click", e=>{
+    const rm = e.target.closest("[data-fav]");
+    if(rm){ Favs.toggle("product", rm.dataset.fav); renderProducts(); return; }
+    const rmp = e.target.closest("[data-favpost]");
+    if(rmp){ e.preventDefault(); Favs.toggle("post", rmp.dataset.favpost); renderPosts(); return; }
+    const add = e.target.closest("[data-add]");
+    if(add){
+      const p = PRODUCTS.find(x=>x.id===add.dataset.add); if(!p) return;
+      const svg = p.cat==="jersey"?jerseySVG(p.opts):shoeSVG(p.opts);
+      Cart.add({sku:p.id,title:p.name,price:p.price,size:p.cat==="jersey"?"L":"42",svg,
+        meta:p.cat==="jersey"?"标准版 · 尺码 L":"标准配色 · 42码"});
+      toast("已加入购物袋："+p.name);
+    }
+  });
+
+  renderProducts();
+  // 深链：?tab=post 直接进帖子页
+  if(new URLSearchParams(location.search).get("tab")==="post"){
+    document.querySelector('.ctab[data-tab="post"]').click();
+  }
+})();
+</script>
+</body>
+</html>

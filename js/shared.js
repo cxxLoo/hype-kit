@@ -105,6 +105,28 @@
   }
   window.updateCartBadge = updateBadge;
 
+  /* ---------- 收藏（本地，商品 + 帖子） ---------- */
+  window.Favs = {
+    KEYS: { product:"hk_fav_products_v1", post:"hk_fav_posts_v1" },
+    list(type){ try{ return JSON.parse(localStorage.getItem(this.KEYS[type])) || []; }catch(e){ return []; } },
+    has(type, id){ return this.list(type).includes(id); },
+    toggle(type, id){
+      const l = this.list(type); const i = l.indexOf(id);
+      if(i>=0) l.splice(i,1); else l.unshift(id);
+      localStorage.setItem(this.KEYS[type], JSON.stringify(l));
+      updateFavBadge();
+      return i<0; // true = 现在已收藏
+    },
+    count(){ return this.list("product").length + this.list("post").length; }
+  };
+  function updateFavBadge(){
+    document.querySelectorAll(".fav-count").forEach(el=>{
+      const c = window.Favs.count();
+      el.textContent = c; el.style.display = c ? "flex" : "none";
+    });
+  }
+  window.updateFavBadge = updateFavBadge;
+
   /* ---------- 订单：状态定义 + 本地凭证 ---------- */
   window.ORDER_FLOW  = ["pending_payment","paid","shipped","completed"];
   window.ORDER_LABEL = {
@@ -149,14 +171,17 @@
         </div>
         <div class="nav-right">
           <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索球衣、球鞋"></div>
-          <a class="icon-btn" href="customize.html" title="定制">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="#111" stroke-width="2" stroke-linecap="round"/><path d="M16 3l5 5L8 21H3v-5L16 3z" stroke="#111" stroke-width="2" stroke-linejoin="round"/></svg>
+          <a class="icon-btn cart-link" href="favorites.html" title="我的收藏">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 20.5S3.5 15 3.5 8.9C3.5 6.1 5.7 4 8.3 4c1.7 0 3 .9 3.7 2 .7-1.1 2-2 3.7-2 2.6 0 4.8 2.1 4.8 4.9C20.5 15 12 20.5 12 20.5z" stroke="#111" stroke-width="2" stroke-linejoin="round"/></svg>
+            <span class="fav-count">0</span>
           </a>
           <a class="icon-btn cart-link" href="cart.html" title="购物袋">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 7h12l-1 13H7L6 7z" stroke="#111" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="#111" stroke-width="2"/></svg>
             <span class="cart-count">0</span>
           </a>
-          <a class="nav-account" id="nav-account" href="account.html">登录/注册</a>
+          <div class="acct" id="acct">
+            <a class="nav-account" href="account.html">登录 / 注册</a>
+          </div>
         </div>
       </div></div></div>`;
       const cur = nav.querySelector(`.menu a[data-k="${active}"]`);
@@ -176,21 +201,69 @@
       </div></footer>`;
     }
     updateBadge();
+    updateFavBadge();
     refreshAccount();
   };
 
+  function avatarInner(name, url){
+    if(url) return `<img src="${escapeHtml(url)}" alt="">`;
+    return escapeHtml(((name||"U").trim()[0]||"U").toUpperCase());
+  }
+  function avatarColor(name){
+    const pool = ["#b1131a","#0a2d5c","#e8467c","#c9a24a","#0a7a3f","#ff6a00","#1f6fe0","#7a3ff2"];
+    let h=0; for(const c of String(name||"")) h=(h*31+c.charCodeAt(0))>>>0;
+    return pool[h % pool.length];
+  }
+
   async function refreshAccount(){
-    const el = document.getElementById("nav-account");
-    if(!el || !window.sb) return;
+    const box = document.getElementById("acct");
+    if(!box || !window.sb) return;
+    let user=null, name="", email="", isAdmin=false, avatar="";
     try{
       const { data:{ session } } = await sb.auth.getSession();
-      const user = session && session.user;
+      user = session && session.user;
       if(user){
-        const name = (user.user_metadata && user.user_metadata.display_name) || user.email.split("@")[0];
-        el.textContent = "我的 · " + name;
-      }else{
-        el.textContent = "登录/注册";
+        email = user.email || "";
+        name = (user.user_metadata && user.user_metadata.display_name) || email.split("@")[0];
+        try{
+          const { data } = await sb.from("profiles").select("display_name,is_admin,avatar_url").eq("id", user.id).single();
+          if(data){ name = data.display_name || name; isAdmin = !!data.is_admin; avatar = data.avatar_url || ""; }
+        }catch(e){}
       }
     }catch(e){}
+
+    if(!user){
+      box.innerHTML = `<a class="nav-account" href="account.html">登录 / 注册</a>`;
+      return;
+    }
+
+    const col = avatarColor(name);
+    box.innerHTML = `
+      <button class="acct-btn" id="acct-btn" aria-haspopup="true">
+        <span class="acct-ava" style="background:${col}">${avatarInner(name, avatar)}</span>
+        <span class="acct-name">${escapeHtml(name)}</span>
+        <svg class="acct-caret" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="acct-menu" id="acct-menu">
+        <div class="acct-head">
+          <span class="acct-ava lg" style="background:${col}">${avatarInner(name, avatar)}</span>
+          <div class="acct-meta"><b>${escapeHtml(name)}</b><span>${escapeHtml(email)}</span></div>
+        </div>
+        <a href="profile.html">个人信息</a>
+        <a href="profile.html#password">密码修改</a>
+        <a href="orders.html">我的订单</a>
+        <a href="favorites.html">我的收藏</a>
+        ${isAdmin ? `<a href="admin/index.html">管理后台</a>` : ``}
+        <button type="button" id="acct-logout">退出登录</button>
+      </div>`;
+
+    const btn = document.getElementById("acct-btn");
+    const menu = document.getElementById("acct-menu");
+    btn.addEventListener("click", (e)=>{ e.stopPropagation(); box.classList.toggle("open"); });
+    document.addEventListener("click", (e)=>{ if(!box.contains(e.target)) box.classList.remove("open"); });
+    document.getElementById("acct-logout").addEventListener("click", async ()=>{
+      await sb.auth.signOut(); location.href = "index.html";
+    });
   }
+  window.refreshAccount = refreshAccount;
 })();
