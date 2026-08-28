@@ -29,7 +29,11 @@
   }
 
   /* ---------- 标签页切换 ---------- */
+<<<<<<< HEAD
   const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts" };
+=======
+  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", accounts:"tab-accounts" };
+>>>>>>> ce171bc6f927260ee23722e5b61d3817877f5ad2
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
@@ -37,8 +41,11 @@
     $("crumb").textContent = t.dataset.crumb || "";
     Object.keys(SECTIONS).forEach(key=>{ $(SECTIONS[key]).style.display = key===k ? "" : "none"; });
     if(k==="orders") loadOrders();
+<<<<<<< HEAD
     if(k==="feedback") loadFeedback();
     if(k==="faqs") loadFaqs();
+=======
+>>>>>>> ce171bc6f927260ee23722e5b61d3817877f5ad2
     if(k==="accounts") loadAccounts();
   }));
 
@@ -341,6 +348,7 @@
     loadOrders();
   }
 
+<<<<<<< HEAD
   /* ================= 用户反馈 ================= */
   const FB_CAT_CLASS = { "咨询":"fb-ask","售后":"fb-after","投诉":"fb-complain","建议":"fb-suggest","其他":"fb-other" };
   const FB_CAT_COLOR = { "咨询":"#3b6fe0","售后":"#e07b00","投诉":"#e0342b","建议":"#16a34a","其他":"#8a93a6" };
@@ -580,6 +588,8 @@
     toast("已删除"); loadFaqs();
   }
 
+=======
+>>>>>>> ce171bc6f927260ee23722e5b61d3817877f5ad2
   /* ================= 账号管理 ================= */
   async function loadAccounts(){
     const box = $("account-list");
