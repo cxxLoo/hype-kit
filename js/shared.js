@@ -281,7 +281,7 @@
           <a href="club.html" data-k="club">俱乐部</a>
         </div>
         <div class="nav-right">
-          <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索牛仔裤、上衣、鞋帽"></div>
+          <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索牛仔裤、鞋帽"></div>
           <a class="icon-btn cart-link" href="favorites.html" title="我的收藏">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 20.5S3.5 15 3.5 8.9C3.5 6.1 5.7 4 8.3 4c1.7 0 3 .9 3.7 2 .7-1.1 2-2 3.7-2 2.6 0 4.8 2.1 4.8 4.9C20.5 15 12 20.5 12 20.5z" stroke="#111" stroke-width="2" stroke-linejoin="round"/></svg>
             <span class="fav-count">0</span>

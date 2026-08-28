@@ -37,7 +37,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .search{display:flex;align-items:center;gap:8px;background:#f3f3f3;border-radius:24px;padding:9px 15px;
   transition:background .15s,box-shadow .15s}
 .search:focus-within{background:#fff;box-shadow:0 0 0 2px #111}
-.search input{border:none;background:none;outline:none;font-size:14px;width:132px}
+.search input{border:none;background:none;outline:none;font-size:14px;width:150px}
 .icon-btn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   transition:background .15s}
 .icon-btn:hover{background:#f3f3f3}
