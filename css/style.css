@@ -93,6 +93,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
 /* ========== 产品网格 ========== */
 .prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+@media(max-width:1100px){.prod-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.prod-grid{grid-template-columns:repeat(2,1fr);gap:16px}}
 .card{cursor:pointer}
 .card .thumb{background:#f5f5f5;border-radius:var(--radius);overflow:hidden;aspect-ratio:1;
   display:flex;align-items:center;justify-content:center;position:relative}
@@ -441,5 +443,60 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
   .pd-cover{min-height:auto}
   .pd-cover .pc-cover.grad{aspect-ratio:3/4;height:auto}
   .pd-main{max-height:none}
+}
+
+/* ================= 商城页面（球衣 / 球鞋 Banner） ================= */
+.mall-hero{position:relative;overflow:hidden;color:#fff}
+.mall-hero::before,.mall-hero::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none}
+.mall-hero .mh-inner{position:relative;z-index:2;max-width:1340px;margin:0 auto;padding:100px 32px 108px}
+.mh-kicker{font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;opacity:.85;margin-bottom:16px}
+.mh-title{font-size:74px;line-height:.98;font-weight:800;letter-spacing:-1.5px;text-shadow:0 6px 34px rgba(0,0,0,.4)}
+.mh-sub{max-width:580px;margin:24px 0 32px;font-size:17px;line-height:1.75;opacity:.94}
+.mh-cta{display:flex;gap:14px;flex-wrap:wrap}
+.mh-badge{display:flex;gap:12px;margin-top:38px;flex-wrap:wrap}
+.mh-badge span{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;
+  border:1px solid rgba(255,255,255,.28);padding:8px 15px;border-radius:24px;
+  background:rgba(255,255,255,.06);backdrop-filter:blur(4px)}
+
+/* 球衣主题：红蓝球场 */
+.mh-jersey{background:#0a1c3d}
+.mh-jersey::before{background:
+  radial-gradient(120% 90% at 100% 0%, rgba(177,19,26,.92) 0%, rgba(177,19,26,0) 55%),
+  radial-gradient(120% 120% at 0% 100%, rgba(10,45,92,1) 0%, rgba(10,28,61,0) 62%),
+  linear-gradient(120deg,#0a2d5c,#0a1c3d)}
+.mh-jersey::after{background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 62px);opacity:.7}
+
+/* 球鞋主题：暗夜金 */
+.mh-shoe{background:#0c0c0e}
+.mh-shoe::before{background:
+  radial-gradient(90% 120% at 85% 12%, rgba(201,162,74,.6) 0%, rgba(201,162,74,0) 46%),
+  radial-gradient(90% 90% at 8% 92%, rgba(60,60,66,.95) 0%, rgba(12,12,14,0) 62%),
+  linear-gradient(120deg,#1c1c20,#0c0c0e)}
+.mh-shoe::after{background:radial-gradient(70% 60% at 50% 118%, rgba(201,162,74,.2), transparent 70%)}
+
+/* 商城工具条 */
+.mall-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-6px 0 26px;flex-wrap:wrap}
+.mall-count{color:var(--gray);font-size:14px}
+.mall-count b{color:#111;font-weight:700}
+.sortbar{display:flex;gap:6px}
+.sortbar button{padding:8px 16px;border-radius:22px;font-size:13px;font-weight:600;color:#666;background:#f3f3f3;transition:.14s}
+.sortbar button:hover{background:#e9e9e9}
+.sortbar button.on{background:#111;color:#fff}
+
+/* 特性带 */
+.mall-feats{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;background:#f5f5f5;border-radius:16px;padding:32px}
+.mall-feats .ft{display:flex;flex-direction:column;gap:6px}
+.mall-feats .ft .ic{font-size:26px}
+.mall-feats .ft b{font-size:15px;font-weight:700}
+.mall-feats .ft span{color:var(--gray);font-size:13px;line-height:1.55}
+
+@media(max-width:900px){
+  .mh-title{font-size:50px}
+  .mall-hero .mh-inner{padding:66px 24px 74px}
+  .mall-feats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .mh-title{font-size:38px}
+  .mh-sub{font-size:15px}
 }
 

@@ -140,8 +140,8 @@
         <a class="logo" href="index.html">${NIKE_LOGO}<span class="brand">HYPE&nbsp;KIT</span></a>
         <div class="menu">
           <a href="index.html" data-k="home">首页</a>
-          <a href="shop.html" data-k="shop">球衣商城</a>
-          <a href="shop.html#shoes" data-k="shop">球鞋</a>
+          <a href="jerseys.html" data-k="jerseys">球衣商城</a>
+          <a href="shoes.html" data-k="shoes">球鞋商城</a>
           <a href="customize.html" data-k="custom">专属定制</a>
           <a href="service.html" data-k="service">客服中心</a>
           <a href="orders.html" data-k="orders">我的订单</a>
@@ -168,7 +168,7 @@
         <div class="foot-grid">
           <div><div class="logo" style="margin-bottom:14px">${NIKE_LOGO}<span class="brand" style="color:#fff">HYPE KIT</span></div>
             <p style="color:#aaa;font-size:14px;max-width:320px">${C.footer_about || ""}</p></div>
-          <div><h5>选购</h5><a href="shop.html">球衣商城</a><a href="shop.html#shoes">球鞋</a><a href="customize.html">专属定制</a><a href="shop.html">新品上市</a></div>
+          <div><h5>选购</h5><a href="jerseys.html">球衣商城</a><a href="shoes.html">球鞋商城</a><a href="customize.html">专属定制</a><a href="jerseys.html">新品上市</a></div>
           <div><h5>帮助</h5><a href="#">配送与退换</a><a href="#">尺码指南</a><a href="#">定制说明</a><a href="service.html">联系客服</a></div>
           <div><h5>关于</h5><a href="#">品牌故事</a><a href="#">俱乐部合作</a><a href="#">加入我们</a><a href="#">隐私政策</a></div>
         </div>

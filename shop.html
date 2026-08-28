@@ -3,62 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>球衣商城 · HYPE KIT</title>
-<link rel="stylesheet" href="css/style.css?v=20260828">
-</head>
-<body>
-<div id="nav-slot"></div>
-
-<section class="section">
-  <div class="container">
-    <h2>球衣商城</h2>
-    <div class="sub">全部支持加购结算,点击「定制」可改配色号码。</div>
-    <div class="prod-grid" id="grid-jersey"></div>
-  </div>
-</section>
-
-<section class="section" id="shoes" style="padding-top:0">
-  <div class="container">
-    <h2>足球战靴</h2>
-    <div class="sub">三区域自由配色,打造专属战靴。</div>
-    <div class="prod-grid" id="grid-shoe"></div>
-  </div>
-</section>
-
-<div id="footer-slot"></div>
-
-<script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260828"></script>
-<script src="js/data.js?v=20260828"></script>
-<script src="js/shared.js?v=20260828"></script>
+<title>商城 · HYPE KIT</title>
 <script>
-(async function(){
-  await loadSiteData();
-  mountChrome("shop");
-  function card(p){
-    const media = productMedia(p);
-    return `<div class="card" data-id="${p.id}">
-      <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}${media}</div>
-      <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
-      <div class="price">¥${p.price}</div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn dark" style="flex:1;padding:10px;font-size:13px" data-add="${p.id}">加入购物袋</button>
-        <a class="btn" style="flex:1;padding:10px;font-size:13px;justify-content:center;border:1px solid #e5e5e5" href="customize.html?id=${p.id}">定制</a>
-      </div></div>`;
-  }
-  document.getElementById("grid-jersey").innerHTML = PRODUCTS.filter(p=>p.cat==="jersey").map(card).join("");
-  document.getElementById("grid-shoe").innerHTML = PRODUCTS.filter(p=>p.cat==="shoe").map(card).join("");
-
-  document.body.addEventListener("click",e=>{
-    const b = e.target.closest("[data-add]");
-    if(!b) return;
-    const p = PRODUCTS.find(x=>x.id===b.dataset.add);
-    const svg = p.cat==="jersey"?jerseySVG(p.opts):shoeSVG(p.opts);
-    Cart.add({sku:p.id, title:p.name, price:p.price, size:"L", svg, meta:p.cat==="jersey"?"标准版 · 尺码 L":"标准配色 · 42码"});
-    toast("已加入购物袋:"+p.name);
-  });
-  if(location.hash==="#shoes") document.getElementById("shoes").scrollIntoView();
-})();
+  // 球衣 / 球鞋商城已拆分为独立页面；带 #shoes 锚点跳球鞋，否则跳球衣
+  location.replace(location.hash === "#shoes" ? "shoes.html" : "jerseys.html");
 </script>
-</body>
+<meta http-equiv="refresh" content="0;url=jerseys.html">
+</head>
+<body></body>
 </html>
