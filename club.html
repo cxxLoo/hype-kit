@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>球迷俱乐部 · HYPE KIT</title>
+<link rel="stylesheet" href="css/style.css?v=20260828">
+</head>
+<body>
+<div id="nav-slot"></div>
+
+<section class="section">
+  <div class="container">
+    <h2>球迷俱乐部</h2>
+    <div class="sub">在这里分享你的生活、开箱与穿搭，和万千球迷一起种草、互赞、互相安利。</div>
+
+    <div class="club-bar">
+      <div class="club-tabs">
+        <button class="ctab on" data-sort="new">最新</button>
+        <button class="ctab" data-sort="hot">最热</button>
+      </div>
+      <button class="btn dark sm" id="open-pub">＋ 发布分享</button>
+    </div>
+
+    <div class="feed" id="feed"><div class="feed-empty">加载中…</div></div>
+  </div>
+</section>
+
+<!-- 悬浮发布按钮（移动端） -->
+<button class="fab" id="fab-pub" title="发布分享">＋</button>
+
+<!-- 帖子详情 -->
+<div class="pmask" id="post-mask">
+  <div class="psheet" id="post-sheet">
+    <button class="pclose" id="post-close">×</button>
+    <div class="pd-cover" id="pd-cover"></div>
+    <div class="pd-main">
+      <div class="pd-author">
+        <span class="avatar" id="pd-ava"></span>
+        <div><b id="pd-name"></b><span class="pd-time" id="pd-time"></span></div>
+      </div>
+      <h3 class="pd-title" id="pd-title"></h3>
+      <div class="pd-body" id="pd-body"></div>
+      <div class="pd-tags" id="pd-tags"></div>
+      <div class="pd-like">
+        <button class="like-btn" id="pd-like"><span class="hrt">♡</span> <span id="pd-like-n">0</span></button>
+      </div>
+      <div class="cmt-head">评论 <span id="pd-cmt-n">0</span></div>
+      <div class="cmt-list" id="cmt-list"></div>
+      <form class="cmt-input" id="cmt-form">
+        <input id="cmt-text" maxlength="200" placeholder="说点什么，友善的评论人人喜欢…" autocomplete="off">
+        <button class="btn dark sm" type="submit">发送</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 发布分享 -->
+<div class="pmask" id="pub-mask">
+  <form class="pubcard" id="pub-form">
+    <button type="button" class="pclose" id="pub-close">×</button>
+    <h3>发布分享</h3>
+    <div class="pubfield">
+      <label>昵称</label>
+      <input id="pub-name" maxlength="20" placeholder="你的昵称">
+    </div>
+    <div class="pubfield">
+      <label>标题</label>
+      <input id="pub-title" maxlength="40" placeholder="一句话吸引大家（必填）">
+    </div>
+    <div class="pubfield">
+      <label>正文</label>
+      <textarea id="pub-body" maxlength="800" placeholder="分享你的开箱、穿搭或球场故事…"></textarea>
+    </div>
+    <div class="pubfield">
+      <label>标签（逗号分隔，选填）</label>
+      <input id="pub-tags" maxlength="60" placeholder="例如：穿搭,开箱,球鞋">
+    </div>
+    <div class="pubfield">
+      <label>封面</label>
+      <div class="cover-pick">
+        <label class="upload-chip" id="up-chip">
+          <input type="file" id="pub-file" accept="image/*" hidden>
+          <span id="up-txt">📷 上传图片</span>
+        </label>
+        <span class="or">或选表情封面：</span>
+        <div class="emoji-row" id="emoji-row"></div>
+      </div>
+      <div class="color-row" id="color-row"></div>
+      <div class="cover-preview" id="cover-preview"></div>
+    </div>
+    <div class="pub-err" id="pub-err"></div>
+    <button class="btn dark block" type="submit" id="pub-submit">发布</button>
+  </form>
+</div>
+
+<div id="footer-slot"></div>
+
+<script src="js/vendor/supabase.js"></script>
+<script src="js/config.js?v=20260828"></script>
+<script src="js/data.js?v=20260828"></script>
+<script src="js/shared.js?v=20260828"></script>
+<script>
+(async function(){
+  await loadContent();
+  mountChrome("club");
+
+  const $ = id=>document.getElementById(id);
+  const LIKED_KEY = "hk_liked_posts_v1";
+  const EMOJIS = ["👕","⚽","👟","🔥","🏆","💪","🧢","🎽","📸","⚡","🧤","🥇"];
+  const COLORS = ["#efe8ff","#ffe3e3","#e3f7ec","#e5f0ff","#fff3d6","#fde8f1","#f4ffcc","#e5edf7","#1a1a1a","#f2f2f2"];
+
+  let sort = "new";
+  let posts = [];
+  let curUser = null, curName = "", curColor = "#7a3ff2";
+  let pub = { emoji:"👕", color:"#efe8ff", image:"" };
+
+  /* 当前登录用户（决定昵称与 author_id） */
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(session && session.user){
+      curUser = session.user;
+      curName = (curUser.user_metadata && curUser.user_metadata.display_name) || curUser.email.split("@")[0];
+      try{
+        const { data } = await sb.from("profiles").select("display_name").eq("id", curUser.id).single();
+        if(data && data.display_name) curName = data.display_name;
+      }catch(e){}
+      curColor = colorFromName(curName);
+    }
+  }catch(e){}
+
+  /* ---------- 工具 ---------- */
+  function likedSet(){ try{ return new Set(JSON.parse(localStorage.getItem(LIKED_KEY))||[]); }catch(e){ return new Set(); } }
+  function saveLiked(s){ localStorage.setItem(LIKED_KEY, JSON.stringify([...s])); }
+  function colorFromName(n){
+    const pool = ["#b1131a","#0a2d5c","#e8467c","#c9a24a","#0a7a3f","#ff6a00","#1f6fe0","#7a3ff2"];
+    let h=0; for(const c of String(n||"")) h=(h*31+c.charCodeAt(0))>>>0;
+    return pool[h % pool.length];
+  }
+  function initial(n){ return (String(n||"?").trim()[0]||"?").toUpperCase(); }
+  function timeAgo(iso){
+    const d = new Date(iso), s = (Date.now()-d.getTime())/1000;
+    if(s<60) return "刚刚";
+    if(s<3600) return Math.floor(s/60)+"分钟前";
+    if(s<86400) return Math.floor(s/3600)+"小时前";
+    if(s<2592000) return Math.floor(s/86400)+"天前";
+    return d.toLocaleDateString();
+  }
+  function avatarHtml(name,color,cls){
+    return `<span class="avatar ${cls||""}" style="background:${color||'#7a3ff2'}">${escapeHtml(initial(name))}</span>`;
+  }
+  function coverHtml(p){
+    if(p.image_url){
+      return `<div class="pc-cover"><img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.title)}" loading="lazy"></div>`;
+    }
+    const dark = /^#(1|2|0)/.test(p.cover_color||"");
+    return `<div class="pc-cover grad ${dark?'on-dark':''}" style="--c:${p.cover_color||'#efe8ff'}">
+      <span class="pc-emoji">${escapeHtml(p.emoji||"👕")}</span></div>`;
+  }
+  function tagsHtml(tags){
+    return String(tags||"").split(/[,，]/).map(t=>t.trim()).filter(Boolean)
+      .map(t=>`<span class="tagchip"># ${escapeHtml(t)}</span>`).join("");
+  }
+
+  /* ---------- 加载并渲染 Feed ---------- */
+  async function loadFeed(){
+    const col = sort==="hot" ? "likes" : "created_at";
+    const { data, error } = await sb.from("posts").select("*").order(col, { ascending:false }).limit(60);
+    if(error){ $("feed").innerHTML = `<div class="feed-empty">加载失败：${escapeHtml(error.message)}</div>`; return; }
+    posts = data || [];
+    renderFeed();
+  }
+  function renderFeed(){
+    if(!posts.length){ $("feed").innerHTML = `<div class="feed-empty">还没有分享，快来发第一篇吧～</div>`; return; }
+    const liked = likedSet();
+    $("feed").innerHTML = posts.map(p=>`
+      <article class="pcard" data-id="${p.id}">
+        ${coverHtml(p)}
+        <div class="pc-body">
+          <h4 class="pc-title">${escapeHtml(p.title)}</h4>
+          <div class="pc-foot">
+            <div class="pc-author">${avatarHtml(p.author_name,p.avatar_color,'sm')}<span>${escapeHtml(p.author_name)}</span></div>
+            <button class="like-btn ${liked.has(p.id)?'on':''}" data-like="${p.id}">
+              <span class="hrt">${liked.has(p.id)?'♥':'♡'}</span> <span class="ln">${p.likes}</span>
+            </button>
+          </div>
+        </div>
+      </article>`).join("");
+
+    // 卡片点击进详情（排除点赞按钮）
+    $("feed").querySelectorAll(".pcard").forEach(card=>{
+      card.addEventListener("click", e=>{
+        if(e.target.closest("[data-like]")) return;
+        openDetail(card.dataset.id);
+      });
+    });
+    // 点赞
+    $("feed").querySelectorAll("[data-like]").forEach(b=>{
+      b.addEventListener("click", ()=>toggleLike(b.dataset.like, b));
+    });
+  }
+
+  /* ---------- 点赞 / 取消赞（乐观更新） ---------- */
+  async function toggleLike(id, btnEl){
+    const s = likedSet();
+    const on = s.has(id);
+    const post = posts.find(p=>p.id===id);
+    const nEls = document.querySelectorAll(`[data-like="${id}"] .ln, #pd-like-n`);
+    // 乐观更新
+    if(on){ s.delete(id); if(post) post.likes=Math.max(0,post.likes-1); }
+    else  { s.add(id);    if(post) post.likes++; }
+    saveLiked(s);
+    reflectLike(id, post ? post.likes : null, !on);
+    try{
+      const { data, error } = await sb.rpc(on?"unlike_post":"like_post", { p_id:id });
+      if(error) throw error;
+      if(post && typeof data === "number"){ post.likes = data; reflectLike(id, data, !on); }
+    }catch(e){
+      // 回滚
+      if(on){ s.add(id); if(post) post.likes++; } else { s.delete(id); if(post) post.likes=Math.max(0,post.likes-1); }
+      saveLiked(s);
+      reflectLike(id, post?post.likes:null, on);
+      toast("操作失败，请稍后再试");
+    }
+  }
+  function reflectLike(id, likes, isOn){
+    document.querySelectorAll(`[data-like="${id}"]`).forEach(btn=>{
+      btn.classList.toggle("on", isOn);
+      const h=btn.querySelector(".hrt"); if(h) h.textContent = isOn?"♥":"♡";
+      const n=btn.querySelector(".ln"); if(n && likes!=null) n.textContent = likes;
+    });
+    if(detailId===id){ $("pd-like").classList.toggle("on", isOn);
+      $("pd-like").querySelector(".hrt").textContent = isOn?"♥":"♡";
+      if(likes!=null) $("pd-like-n").textContent = likes; }
+  }
+
+  /* ---------- 帖子详情 ---------- */
+  let detailId = null;
+  async function openDetail(id){
+    const p = posts.find(x=>x.id===id); if(!p) return;
+    detailId = id;
+    $("pd-cover").innerHTML = coverHtml(p);
+    const ava = $("pd-ava");
+    ava.style.background = p.avatar_color || "#7a3ff2";
+    ava.textContent = initial(p.author_name);
+    $("pd-name").textContent = p.author_name;
+    $("pd-time").textContent = timeAgo(p.created_at);
+    $("pd-title").textContent = p.title;
+    $("pd-body").innerHTML = escapeHtml(p.body).replace(/\n/g,"<br>");
+    $("pd-tags").innerHTML = tagsHtml(p.tags);
+    const liked = likedSet().has(id);
+    $("pd-like").classList.toggle("on", liked);
+    $("pd-like").querySelector(".hrt").textContent = liked?"♥":"♡";
+    $("pd-like-n").textContent = p.likes;
+    $("pd-cmt-n").textContent = p.comment_count;
+    $("cmt-list").innerHTML = `<div class="cmt-empty">加载评论中…</div>`;
+    openMask("post-mask");
+    loadComments(id);
+  }
+  async function loadComments(id){
+    const { data, error } = await sb.from("post_comments").select("*")
+      .eq("post_id", id).order("created_at", { ascending:true });
+    if(error){ $("cmt-list").innerHTML = `<div class="cmt-empty">评论加载失败</div>`; return; }
+    if(!data || !data.length){ $("cmt-list").innerHTML = `<div class="cmt-empty">还没有评论，来抢沙发～</div>`; return; }
+    $("cmt-list").innerHTML = data.map(c=>`
+      <div class="cmt">
+        ${avatarHtml(c.author_name,c.avatar_color,'sm')}
+        <div class="cmt-b"><b>${escapeHtml(c.author_name)}</b>
+          <span class="cmt-t">${timeAgo(c.created_at)}</span>
+          <p>${escapeHtml(c.body).replace(/\n/g,"<br>")}</p></div>
+      </div>`).join("");
+  }
+  $("pd-like").addEventListener("click", ()=>{ if(detailId) toggleLike(detailId, $("pd-like")); });
+
+  $("cmt-form").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const text = $("cmt-text").value.trim();
+    if(!text || !detailId) return;
+    const name = curName || "匿名球迷";
+    const row = { post_id:detailId, author_id:curUser?curUser.id:null,
+      author_name:name, avatar_color:curUser?curColor:colorFromName(name), body:text };
+    $("cmt-text").value = "";
+    const { error } = await sb.from("post_comments").insert(row);
+    if(error){ toast("评论失败：" + error.message); return; }
+    const post = posts.find(p=>p.id===detailId);
+    if(post){ post.comment_count++; $("pd-cmt-n").textContent = post.comment_count; }
+    loadComments(detailId);
+  });
+
+  /* ---------- 发布分享 ---------- */
+  function buildPub(){
+    $("emoji-row").innerHTML = EMOJIS.map(e=>`<button type="button" class="em ${e===pub.emoji?'on':''}" data-e="${e}">${e}</button>`).join("");
+    $("color-row").innerHTML = COLORS.map(c=>`<button type="button" class="co ${c===pub.color?'on':''}" data-c="${c}" style="background:${c}"></button>`).join("");
+    $("emoji-row").querySelectorAll("[data-e]").forEach(b=>b.addEventListener("click",()=>{
+      pub.emoji=b.dataset.e; pub.image=""; $("pub-file").value="";
+      $("emoji-row").querySelectorAll(".em").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+      renderPubPreview();
+    }));
+    $("color-row").querySelectorAll("[data-c]").forEach(b=>b.addEventListener("click",()=>{
+      pub.color=b.dataset.c; pub.image=""; $("pub-file").value="";
+      $("color-row").querySelectorAll(".co").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+      renderPubPreview();
+    }));
+    renderPubPreview();
+  }
+  function renderPubPreview(){
+    if(pub.image){
+      $("cover-preview").innerHTML = `<div class="pc-cover"><img src="${pub.image}" alt=""></div>`;
+    }else{
+      const dark = /^#(1|2|0)/.test(pub.color);
+      $("cover-preview").innerHTML = `<div class="pc-cover grad ${dark?'on-dark':''}" style="--c:${pub.color}">
+        <span class="pc-emoji">${pub.emoji}</span></div>`;
+    }
+  }
+  $("pub-file").addEventListener("change", async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(!/^image\//.test(file.type)){ toast("请选择图片文件"); return; }
+    $("up-txt").textContent = "上传中…";
+    try{
+      const ext = (file.name.split(".").pop()||"jpg").toLowerCase();
+      const path = `club/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error } = await sb.storage.from(window.SB_BUCKET).upload(path, file, { upsert:false, cacheControl:"3600" });
+      if(error) throw error;
+      const { data } = sb.storage.from(window.SB_BUCKET).getPublicUrl(path);
+      pub.image = data.publicUrl; renderPubPreview();
+      $("up-txt").textContent = "📷 重新上传";
+    }catch(err){
+      toast("图片上传失败，可改用表情封面"); console.warn(err);
+      $("up-txt").textContent = "📷 上传图片";
+    }
+  });
+
+  function openPub(){
+    $("pub-name").value = curName || "";
+    $("pub-title").value = ""; $("pub-body").value = ""; $("pub-tags").value = "";
+    $("pub-err").textContent = "";
+    pub = { emoji:"👕", color:"#efe8ff", image:"" };
+    buildPub();
+    openMask("pub-mask");
+  }
+  $("pub-form").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const title = $("pub-title").value.trim();
+    const body  = $("pub-body").value.trim();
+    if(!title){ $("pub-err").textContent = "请填写标题～"; return; }
+    const name = ($("pub-name").value.trim()) || curName || "匿名球迷";
+    const btn = $("pub-submit"); btn.disabled = true; btn.textContent = "发布中…";
+    const row = {
+      author_id: curUser ? curUser.id : null,
+      author_name: name,
+      avatar_color: curUser ? curColor : colorFromName(name),
+      title, body,
+      tags: $("pub-tags").value.trim(),
+      image_url: pub.image || "",
+      cover_color: pub.color,
+      emoji: pub.emoji
+    };
+    const { error } = await sb.from("posts").insert(row);
+    btn.disabled = false; btn.textContent = "发布";
+    if(error){ $("pub-err").textContent = "发布失败：" + error.message; return; }
+    closeMask("pub-mask");
+    toast("发布成功，感谢分享💚");
+    sort = "new"; setActiveTab(); await loadFeed();
+  });
+
+  /* ---------- 弹层控制 ---------- */
+  function openMask(id){ $(id).classList.add("show"); document.body.style.overflow="hidden"; }
+  function closeMask(id){ $(id).classList.remove("show"); document.body.style.overflow=""; }
+  $("post-close").addEventListener("click", ()=>{ closeMask("post-mask"); detailId=null; });
+  $("pub-close").addEventListener("click", ()=>closeMask("pub-mask"));
+  [["post-mask",()=>detailId=null],["pub-mask"]].forEach(([id,cb])=>{
+    $(id).addEventListener("click", e=>{ if(e.target.id===id){ closeMask(id); if(cb)cb(); } });
+  });
+  $("open-pub").addEventListener("click", openPub);
+  $("fab-pub").addEventListener("click", openPub);
+
+  /* ---------- 排序切换 ---------- */
+  function setActiveTab(){ document.querySelectorAll(".ctab").forEach(t=>t.classList.toggle("on", t.dataset.sort===sort)); }
+  document.querySelectorAll(".ctab").forEach(t=>t.addEventListener("click", ()=>{
+    if(sort===t.dataset.sort) return;
+    sort = t.dataset.sort; setActiveTab(); loadFeed();
+  }));
+
+  await loadFeed();
+})();
+</script>
+</body>
+</html>

@@ -145,7 +145,7 @@
           <a href="customize.html" data-k="custom">专属定制</a>
           <a href="service.html" data-k="service">客服中心</a>
           <a href="orders.html" data-k="orders">我的订单</a>
-          <a href="index.html#club">俱乐部</a>
+          <a href="club.html" data-k="club">俱乐部</a>
         </div>
         <div class="nav-right">
           <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索球衣、球鞋"></div>
