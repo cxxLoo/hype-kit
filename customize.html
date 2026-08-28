@@ -13,8 +13,8 @@
 <section class="section">
   <div class="container">
     <div class="tabs" style="max-width:640px">
-      <div class="tab on" data-mode="jersey">定制球衣</div>
-      <div class="tab" data-mode="shoe">定制球鞋</div>
+      <div class="tab on" data-mode="outfit">定制服装</div>
+      <div class="tab" data-mode="acc">定制饰品</div>
       <div class="tab" data-mode="tryon">AI 试穿</div>
     </div>
 
@@ -22,44 +22,43 @@
       <div class="stage"><div id="preview" style="width:100%;display:flex;justify-content:center"></div></div>
 
       <div class="panel">
-        <h1 id="p-title">专属球衣定制</h1>
-        <div class="p-price" id="p-price">¥699</div>
+        <h1 id="p-title">专属牛仔穿搭定制</h1>
+        <div class="p-price" id="p-price">¥599</div>
         <div class="p-note">一件起做 · 预计 5-7 个工作日发货</div>
 
-        <!-- 球衣面板 -->
-        <div id="panel-jersey">
+        <!-- 服装（牛仔穿搭）面板 -->
+        <div id="panel-outfit">
           <div class="field">
-            <label>版式</label>
-            <div class="sizes" id="j-style">
-              <div class="size on" data-v="stripe">竖条纹</div>
-              <div class="size" data-v="sash">斜纹</div>
-              <div class="size" data-v="solid">纯色</div>
+            <label>版型</label>
+            <div class="sizes" id="o-fit">
+              <div class="size on" data-v="straight">直筒</div>
+              <div class="size" data-v="wide">阔腿</div>
+              <div class="size" data-v="tapered">锥形</div>
+              <div class="size" data-v="flare">微喇</div>
             </div>
           </div>
           <div class="field">
-            <label>主色</label>
-            <div class="swatches" data-target="primary"></div>
+            <label>牛仔水洗色</label>
+            <div class="swatches" data-target="wash"></div>
           </div>
           <div class="field">
-            <label>副色 / 条纹色</label>
-            <div class="swatches" data-target="secondary"></div>
+            <label>上衣颜色</label>
+            <div class="swatches" data-target="top"></div>
           </div>
           <div class="field">
-            <label>文字颜色</label>
-            <div class="swatches" data-target="textColor"></div>
+            <label>做旧工艺</label>
+            <div class="sizes" id="o-distress">
+              <div class="size on" data-v="none">原色</div>
+              <div class="size" data-v="whisker">猫须</div>
+              <div class="size" data-v="ripped">破洞</div>
+            </div>
           </div>
-          <div class="row2">
-            <div class="field" style="flex:1"><label>球员姓名</label>
-              <input class="txt-input" id="j-name" maxlength="12" value="YOU"></div>
-            <div class="field" style="width:110px"><label>号码</label>
-              <input class="txt-input" id="j-number" maxlength="2" value="10"></div>
-          </div>
-          <div class="field"><label>胸前广告文字</label>
-            <input class="txt-input" id="j-sponsor" maxlength="10" value="HYPE">
-            <div class="hint">留空则不显示广告。</div>
+          <div class="field"><label>口袋绣字（可选）</label>
+            <input class="txt-input" id="o-text" maxlength="10" value="DENIM">
+            <div class="hint">留空则不绣字。</div>
           </div>
           <div class="field"><label>尺码</label>
-            <div class="sizes" id="j-size">
+            <div class="sizes" id="o-size">
               <div class="size" data-v="S">S</div><div class="size on" data-v="M">M</div>
               <div class="size" data-v="L">L</div><div class="size" data-v="XL">XL</div>
               <div class="size" data-v="XXL">XXL</div>
@@ -67,19 +66,25 @@
           </div>
         </div>
 
-        <!-- 球鞋面板 -->
-        <div id="panel-shoe" style="display:none">
-          <div class="field"><label>鞋身颜色</label><div class="swatches" data-target="body"></div></div>
-          <div class="field"><label>鞋底颜色</label><div class="swatches" data-target="sole"></div></div>
-          <div class="field"><label>勾勾 / Logo 颜色</label><div class="swatches" data-target="swoosh"></div></div>
-          <div class="field"><label>鞋带颜色</label><div class="swatches" data-target="lace"></div></div>
-          <div class="field"><label>鞋侧刻字</label>
-            <input class="txt-input" id="s-name" maxlength="10" value="HYPE"></div>
+        <!-- 饰品（帽子）面板 -->
+        <div id="panel-acc" style="display:none">
+          <div class="field">
+            <label>帽型</label>
+            <div class="sizes" id="a-type">
+              <div class="size on" data-v="cap">棒球帽</div>
+              <div class="size" data-v="bucket">渔夫帽</div>
+              <div class="size" data-v="fedora">毡帽</div>
+              <div class="size" data-v="beanie">冷帽</div>
+            </div>
+          </div>
+          <div class="field"><label>主色</label><div class="swatches" data-target="color"></div></div>
+          <div class="field"><label>滚边 / 配色</label><div class="swatches" data-target="accent"></div></div>
+          <div class="field"><label>刺绣文字（可选）</label>
+            <input class="txt-input" id="a-text" maxlength="8" value="HYPE"></div>
           <div class="field"><label>尺码</label>
-            <div class="sizes" id="s-size">
-              <div class="size" data-v="39">39</div><div class="size" data-v="40">40</div>
-              <div class="size on" data-v="41">41</div><div class="size" data-v="42">42</div>
-              <div class="size" data-v="43">43</div><div class="size" data-v="44">44</div>
+            <div class="sizes" id="a-size">
+              <div class="size on" data-v="均码">均码</div>
+              <div class="size" data-v="S">S</div><div class="size" data-v="M">M</div><div class="size" data-v="L">L</div>
             </div>
           </div>
         </div>
@@ -99,7 +104,7 @@
           <div class="ty-stage" id="ty-stage">
             <div class="ty-empty" id="ty-empty">
               <div class="ty-empty-ic">📸</div>
-              <p>上传一张清晰的全身照，即可试穿商城单品</p>
+              <p>上传一张清晰的全身照，即可试穿商城的时尚单品</p>
               <label class="btn dark" style="cursor:pointer">上传照片
                 <input type="file" id="ty-file" accept="image/*" hidden>
               </label>
@@ -128,7 +133,7 @@
               <h3 class="ty-h" style="margin:0">② AI 智能穿搭</h3>
               <button class="btn sm" id="ty-recommend">✨ 换一批</button>
             </div>
-            <p class="ty-ai-desc">根据配色与风格，为你搭配「球衣 + 战靴」整套造型，点搭配即可一键试穿。</p>
+            <p class="ty-ai-desc">根据风格为你搭配「牛仔裤 + 鞋帽」整套造型，点搭配即可一键试穿。</p>
             <div id="ty-outfits" class="ty-outfits"></div>
           </div>
         </div>
@@ -148,28 +153,32 @@
 await loadSiteData();
 mountChrome("custom");
 
-const PALETTE = ["#b1131a","#0a2d5c","#111111","#ffffff","#f5c518","#0a7a3f","#ff6a00","#1f6fe0","#c8ff00","#c9a24a","#e8467c","#f2f2f2"];
-let mode = "jersey";
-let J = {style:"stripe",primary:"#b1131a",secondary:"#0a2d5c",textColor:"#ffffff",name:"YOU",number:"10",sponsor:"HYPE",size:"M"};
-let S = {body:"#ffffff",sole:"#111111",swoosh:"#b1131a",lace:"#111111",name:"HYPE",size:"41"};
-const PRICE = {jersey:699, shoe:1299};
+// 时尚色板：牛仔水洗色 / 中性上衣色 / 帽饰配色
+const PALETTE = ["#31538a","#4a6fa5","#22324f","#0f1420","#111827","#7d94b5","#efe9e0","#f2f2f2","#d9c7a3","#8a5a3b","#0f5b5b","#c9a24a","#b1131a","#e8467c"];
+let mode = "outfit";
+let O = {fit:"straight", wash:"#31538a", top:"#efe9e0", distress:"none", text:"DENIM", size:"M"};
+let A = {type:"cap", color:"#1f3a63", accent:"#e6b25e", text:"HYPE", size:"均码"};
+const PRICE = {outfit:599, acc:199};
+const FIT_NAME  = {straight:"直筒", wide:"阔腿", tapered:"锥形", flare:"微喇"};
+const DIS_NAME  = {none:"原色", whisker:"猫须", ripped:"破洞"};
+const HAT_NAME  = {cap:"棒球帽", bucket:"渔夫帽", fedora:"毡帽", beanie:"冷帽"};
 
 // 预填色板
 function paintSwatches(){
   document.querySelectorAll(".swatches").forEach(box=>{
     const tgt = box.dataset.target;
-    const cur = (mode==="jersey"?J:S)[tgt];
+    const cur = (mode==="outfit"?O:A)[tgt];
     box.innerHTML = PALETTE.map(c=>`<span class="sw ${c===cur?"on":""}" data-c="${c}" style="background:${c}"></span>`).join("");
   });
 }
 
 function render(){
-  document.getElementById("preview").innerHTML = mode==="jersey"?jerseySVG(J):shoeSVG(S);
-  document.getElementById("p-title").textContent = mode==="jersey"?"专属球衣定制":"专属球鞋定制";
-  document.getElementById("p-price").textContent = "¥"+PRICE[mode];
+  document.getElementById("preview").innerHTML = mode==="outfit"?denimSVG(O):accessorySVG(A);
+  document.getElementById("p-title").textContent = mode==="outfit"?"专属牛仔穿搭定制":"专属帽饰定制";
+  document.getElementById("p-price").textContent = "¥"+(mode==="outfit"?PRICE.outfit:PRICE.acc);
 }
 
-// 版式/尺码点选
+// 版型/尺码/工艺点选
 function bindSizeGroup(id, key, obj){
   document.getElementById(id)?.addEventListener("click",e=>{
     const el=e.target.closest(".size"); if(!el)return;
@@ -177,34 +186,36 @@ function bindSizeGroup(id, key, obj){
     el.classList.add("on"); obj[key]=el.dataset.v; render();
   });
 }
-bindSizeGroup("j-style","style",J);
-bindSizeGroup("j-size","size",J);
-bindSizeGroup("s-size","size",S);
+bindSizeGroup("o-fit","fit",O);
+bindSizeGroup("o-distress","distress",O);
+bindSizeGroup("o-size","size",O);
+bindSizeGroup("a-type","type",A);
+bindSizeGroup("a-size","size",A);
 
 // 色板点选
 document.body.addEventListener("click",e=>{
   const sw=e.target.closest(".sw"); if(!sw)return;
   const tgt=sw.closest(".swatches").dataset.target;
-  (mode==="jersey"?J:S)[tgt]=sw.dataset.c;
+  (mode==="outfit"?O:A)[tgt]=sw.dataset.c;
   sw.parentElement.querySelectorAll(".sw").forEach(x=>x.classList.remove("on"));
   sw.classList.add("on"); render();
 });
 
 // 文本输入
 const bindText=(id,key,obj)=>document.getElementById(id)?.addEventListener("input",e=>{obj[key]=e.target.value;render();});
-bindText("j-name","name",J); bindText("j-number","number",J); bindText("j-sponsor","sponsor",J);
-bindText("s-name","name",S);
+bindText("o-text","text",O);
+bindText("a-text","text",A);
 
-// 切换球衣/球鞋/AI试穿
+// 切换 服装/饰品/AI试穿
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   t.classList.add("on"); mode=t.dataset.mode;
-  const design = mode==="jersey" || mode==="shoe";
+  const design = mode==="outfit" || mode==="acc";
   document.getElementById("design-area").style.display = design ? "" : "none";
   document.getElementById("tryon").style.display = mode==="tryon" ? "" : "none";
   if(design){
-    document.getElementById("panel-jersey").style.display = mode==="jersey"?"":"none";
-    document.getElementById("panel-shoe").style.display = mode==="shoe"?"":"none";
+    document.getElementById("panel-outfit").style.display = mode==="outfit"?"":"none";
+    document.getElementById("panel-acc").style.display = mode==="acc"?"":"none";
     paintSwatches(); render();
   }else{
     tyInit();
@@ -214,20 +225,28 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
 // 随机配色
 document.getElementById("rand").addEventListener("click",()=>{
   const rc=()=>PALETTE[Math.floor(Math.random()*PALETTE.length)];
-  if(mode==="jersey"){J.primary=rc();J.secondary=rc();J.textColor=Math.random()>.5?"#fff":"#111";}
-  else{S.body=rc();S.sole=rc();S.swoosh=rc();S.lace=rc();}
+  if(mode==="outfit"){
+    O.wash=rc(); O.top=rc();
+    const fits=Object.keys(FIT_NAME); O.fit=fits[Math.floor(Math.random()*fits.length)];
+    document.querySelectorAll("#o-fit .size").forEach(x=>x.classList.toggle("on",x.dataset.v===O.fit));
+  }else{
+    A.color=rc(); A.accent=rc();
+    const hats=Object.keys(HAT_NAME); A.type=hats[Math.floor(Math.random()*hats.length)];
+    document.querySelectorAll("#a-type .size").forEach(x=>x.classList.toggle("on",x.dataset.v===A.type));
+  }
   paintSwatches(); render();
 });
 
 // 加入购物袋
 document.getElementById("add-cart").addEventListener("click",()=>{
-  if(mode==="jersey"){
-    Cart.add({sku:"custom-jersey",title:"定制球衣 · "+(J.name||"无名")+" #"+(J.number||"0"),
-      price:PRICE.jersey,size:J.size,svg:jerseySVG(J),
-      meta:`版式:${({stripe:"竖条纹",sash:"斜纹",solid:"纯色"})[J.style]} · 尺码 ${J.size}`});
+  if(mode==="outfit"){
+    Cart.add({sku:"custom-outfit", title:"定制牛仔穿搭 · "+FIT_NAME[O.fit],
+      price:PRICE.outfit, size:O.size, svg:denimSVG(O),
+      meta:`${FIT_NAME[O.fit]} · ${DIS_NAME[O.distress]} · 尺码 ${O.size}`});
   }else{
-    Cart.add({sku:"custom-shoe",title:"定制球鞋 · "+(S.name||"HYPE"),
-      price:PRICE.shoe,size:S.size,svg:shoeSVG(S),meta:`定制配色 · ${S.size}码`});
+    Cart.add({sku:"custom-acc", title:"定制饰品 · "+HAT_NAME[A.type],
+      price:PRICE.acc, size:A.size, svg:accessorySVG(A),
+      meta:`${HAT_NAME[A.type]} · ${A.size}`});
   }
   toast("定制款已加入购物袋!");
 });
@@ -244,6 +263,9 @@ let tyCurrent = null;                      // 当前试穿商品
 let tyPos = { x:0.5, y:0.52, scale:0.72 }; // 相对比例
 let tyReady = false;
 
+// 可试穿的单品：服装 + 鞋帽
+const TY_ITEMS = () => PRODUCTS.filter(p=>p.cat==="clothing" || p.cat==="footwear");
+
 function tyInit(){
   if(tyReady) return;
   tyReady = true;
@@ -254,8 +276,9 @@ function tyInit(){
 /* 单品选择列表 */
 function tyBuildPicker(){
   const box = document.getElementById("ty-picker");
-  if(!PRODUCTS.length){ box.innerHTML = `<div class="ty-empty2">暂无商品。</div>`; return; }
-  box.innerHTML = PRODUCTS.map(p=>`
+  const items = TY_ITEMS();
+  if(!items.length){ box.innerHTML = `<div class="ty-empty2">暂无商品。</div>`; return; }
+  box.innerHTML = items.map(p=>`
     <button type="button" class="ty-card" data-tid="${p.id}">
       <div class="ty-thumb">${productMedia(p)}</div>
       <div class="ty-nm">${escapeHtml(p.name)}</div>
@@ -291,7 +314,6 @@ function tySetProduct(p){
   tyOverlay.innerHTML = productMedia(p);
   tyOverlay.style.display = "";
   tyApplyTransform();
-  // 高亮选中的卡片
   document.querySelectorAll("#ty-picker .ty-card").forEach(c=>{
     c.classList.toggle("on", c.dataset.tid===p.id);
   });
@@ -420,45 +442,22 @@ document.getElementById("ty-ai-gen").addEventListener("click", async ()=>{
   }
 });
 
-/* ---------- AI 穿搭推荐（规则引擎） ---------- */
-function hexToRgb(h){
-  h = String(h||"").replace("#","");
-  if(h.length===3) h = h.split("").map(c=>c+c).join("");
-  if(!/^[0-9a-fA-F]{6}$/.test(h)) return {r:17,g:17,b:17};
-  const n = parseInt(h,16); return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
-}
-function rgbToHsl({r,g,b}){
-  r/=255; g/=255; b/=255;
-  const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0,s=0,l=(max+min)/2;
-  if(max!==min){ const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
-    if(max===r) h=(g-b)/d+(g<b?6:0); else if(max===g) h=(b-r)/d+2; else h=(r-g)/d+4; h/=6; }
-  return { h:h*360, s, l };
-}
-function isNeutral(hsl){ return hsl.s<0.15 || hsl.l<0.12 || hsl.l>0.9; }
-function colorHarmony(c1, c2){
-  const a=rgbToHsl(hexToRgb(c1)), b=rgbToHsl(hexToRgb(c2));
-  if(isNeutral(a)||isNeutral(b)) return { score:82, tag:"百搭中性" };
-  let dh=Math.abs(a.h-b.h); if(dh>180) dh=360-dh;
-  if(dh>150) return { score:93, tag:"撞色吸睛" };
-  if(dh<30)  return { score:88, tag:"同色系和谐" };
-  if(dh>=90) return { score:78, tag:"对比明快" };
-  return { score:70, tag:"邻近柔和" };
-}
-const TY_SCENES = ["主场硬刚全场瞩目","客场低调又有型","日常街头运动风","训练日轻松搭配","球迷聚会应援造型"];
+/* ---------- AI 穿搭推荐（牛仔裤 + 鞋帽） ---------- */
+const TY_SCENES = ["通勤优雅利落","周末街头休闲","约会甜酷平衡","出街个性吸睛","度假慵懒随性"];
 function reasonText(c){
   const scene = TY_SCENES[Math.floor(Math.random()*TY_SCENES.length)];
-  return `${c.tag}配色，${scene}。这套「${c.j.name} + ${c.s.name}」协调度约 ${c.score} 分。`;
+  const tail = (c.s.opts && c.s.opts.kind==="hat") ? "帽饰点睛，整体更有层次" : "潮鞋收尾，比例更修长";
+  return `${scene}。「${c.j.name} + ${c.s.name}」协调度约 ${c.score} 分，${tail}。`;
 }
 function recommendOutfits(){
-  const js = PRODUCTS.filter(p=>p.cat==="jersey");
-  const ss = PRODUCTS.filter(p=>p.cat==="shoe");
-  if(!js.length || !ss.length) return [];
+  const jeans = PRODUCTS.filter(p=>p.cat==="clothing" && p.opts && p.opts.kind==="jeans");
+  const foot  = PRODUCTS.filter(p=>p.cat==="footwear");
+  const base  = jeans.length ? jeans : PRODUCTS.filter(p=>p.cat==="clothing");
+  if(!base.length || !foot.length) return [];
   const combos=[];
-  js.forEach(j=>ss.forEach(s=>{
-    const jc=(j.opts&&j.opts.primary)||"#111111";
-    const sc=(s.opts&&s.opts.body)||"#111111";
-    const h=colorHarmony(jc,sc);
-    combos.push({ j, s, score:h.score + (j.tag?3:0) + Math.floor(Math.random()*4), tag:h.tag });
+  base.forEach(j=>foot.forEach(s=>{
+    combos.push({ j, s, tag:(s.opts&&s.opts.kind==="hat")?"帽饰点睛":"潮鞋搭配",
+      score:78 + Math.floor(Math.random()*18) + (j.tag?2:0) + (s.tag?2:0) });
   }));
   combos.sort((a,b)=>b.score-a.score);
   const seen=new Set(), out=[];
@@ -480,7 +479,7 @@ function renderOutfits(){
         <div class="ty-of-title">推荐搭配 ${i+1} <span class="ty-badge">${c.tag}</span></div>
         <div class="ty-of-names">${escapeHtml(c.j.name)} + ${escapeHtml(c.s.name)}</div>
         <div class="ty-of-reason">${escapeHtml(reasonText(c))}</div>
-        <button class="btn sm outline" data-tryj="${c.j.id}">试穿这件球衣</button>
+        <button class="btn sm outline" data-tryj="${c.j.id}">试穿这条牛仔裤</button>
       </div>
     </div>`).join("");
   box.querySelectorAll("[data-tryj]").forEach(b=>b.addEventListener("click",()=>{
@@ -489,19 +488,6 @@ function renderOutfits(){
 }
 document.getElementById("ty-recommend").addEventListener("click", renderOutfits);
 window.addEventListener("resize", ()=>{ if(tyCurrent && mode==="tryon") tyApplyTransform(); });
-
-// 深链:从商城点定制带入预设
-(function(){
-  const id=new URLSearchParams(location.search).get("id");
-  if(!id)return;
-  const p=PRODUCTS.find(x=>x.id===id); if(!p)return;
-  if(p.cat==="jersey"){ mode="jersey"; Object.assign(J,p.opts); document.querySelector('.tab[data-mode="jersey"]').click();
-    document.getElementById("j-name").value=J.name; document.getElementById("j-number").value=J.number;
-    document.getElementById("j-sponsor").value=J.sponsor||"";
-    document.querySelectorAll("#j-style .size").forEach(x=>x.classList.toggle("on",x.dataset.v===J.style));
-  }else{ Object.assign(S,p.opts); document.querySelector('.tab[data-mode="shoe"]').click();
-    document.getElementById("s-name").value=S.name; }
-})();
 
 paintSwatches(); render();
 })();

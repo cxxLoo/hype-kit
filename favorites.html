@@ -59,20 +59,13 @@
       return;
     }
     $("fav-products").innerHTML = items.map(p=>{
-      const canCustomize = p.cat==="jersey" || p.cat==="shoe";
-      const actions = canCustomize
-        ? `<div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn dark" style="flex:1;padding:10px;font-size:13px" data-add="${p.id}">加入购物袋</button>
-            <a class="btn" style="flex:1;padding:10px;font-size:13px;justify-content:center;border:1px solid #e5e5e5" href="customize.html?id=${p.id}">定制</a>
-          </div>`
-        : `<button class="btn dark" style="width:100%;padding:11px;font-size:13px;margin-top:10px;justify-content:center" data-add="${p.id}">加入购物袋</button>`;
       return `<div class="card" data-id="${p.id}">
         <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}
           <button class="fav-btn on" data-fav="${p.id}" title="取消收藏">${heartSvg}</button>
           ${productMedia(p)}</div>
         <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
         <div class="price">¥${p.price}</div>
-        ${actions}
+        <button class="btn dark" style="width:100%;padding:11px;font-size:13px;margin-top:10px;justify-content:center" data-add="${p.id}">加入购物袋</button>
       </div>`;}).join("");
   }
 

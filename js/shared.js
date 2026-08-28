@@ -74,6 +74,114 @@
   function escapeHtml(s){return String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));}
   window.escapeHtml = escapeHtml;
 
+  /* 牛仔穿搭（上衣 + 牛仔裤）：版型/水洗色/上衣色/做旧/绣字可定制 */
+  window.denimSVG = function(o){
+    o = o || {};
+    const wash = o.wash || "#31538a";
+    const top  = o.top  || "#efe9e0";
+    const fit  = o.fit  || "straight";
+    const dis  = o.distress || "none";
+    const txt  = (o.text || "").toUpperCase();
+    const st   = "#e6b25e"; // 金色车缝线
+    const waistY = 158, crotchY = 252, kneeY = 336, ankleY = 436;
+    const FITS = {
+      straight:{ko:118, ao:122, ai:178},
+      tapered: {ko:128, ao:150, ai:184},
+      wide:    {ko:110, ao:92,  ai:166},
+      flare:   {ko:136, ao:90,  ai:174}
+    };
+    const f = FITS[fit] || FITS.straight;
+    const mir = x => 400 - x;
+    const legL = `M118 ${waistY} Q114 ${(waistY+kneeY)/2} ${f.ko} ${kneeY}`
+      + ` Q${(f.ko+f.ao)/2} ${(kneeY+ankleY)/2+8} ${f.ao} ${ankleY}`
+      + ` L${f.ai} ${ankleY} Q${(f.ai+196)/2} ${(ankleY+crotchY)/2} 196 ${crotchY} L196 ${waistY} Z`;
+    const legR = `M${mir(118)} ${waistY} Q${mir(114)} ${(waistY+kneeY)/2} ${mir(f.ko)} ${kneeY}`
+      + ` Q${mir((f.ko+f.ao)/2)} ${(kneeY+ankleY)/2+8} ${mir(f.ao)} ${ankleY}`
+      + ` L${mir(f.ai)} ${ankleY} Q${mir((f.ai+196)/2)} ${(ankleY+crotchY)/2} ${mir(196)} ${crotchY} L${mir(196)} ${waistY} Z`;
+    let dz = "";
+    if(dis === "whisker"){
+      dz = `<g stroke="rgba(255,255,255,.5)" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M150 208 q18 8 30 4 M148 222 q22 8 36 3 M250 208 q-18 8 -30 4 M252 222 q-22 8 -36 3"/></g>`;
+    } else if(dis === "ripped"){
+      dz = `<g fill="rgba(255,255,255,.85)"><rect x="120" y="322" width="34" height="15" rx="3"/><rect x="246" y="322" width="34" height="15" rx="3"/></g>
+        <g stroke="rgba(0,0,0,.14)" stroke-width="1"><path d="M122 330h30 M248 330h30"/></g>`;
+    }
+    const tee = `<g><path d="M150 58 L120 78 L108 120 L134 132 L140 108 L140 168 L260 168 L260 108 L266 132 L292 120 L280 78 L250 58 Q225 84 175 58 Z"
+        fill="${top}" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
+      <path d="M175 58 Q200 82 225 58 L220 74 Q200 92 180 74 Z" fill="rgba(0,0,0,.08)"/></g>`;
+    const pocketTxt = txt
+      ? `<text x="150" y="212" text-anchor="middle" font-size="14" font-weight="700" fill="${st}" font-family="Arial" letter-spacing="1">${escapeHtml(txt)}</text>` : "";
+    return `<svg viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="dwash" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(255,255,255,.14)"/><stop offset=".5" stop-color="rgba(255,255,255,0)"/>
+        <stop offset="1" stop-color="rgba(0,0,0,.2)"/></linearGradient></defs>
+      ${tee}
+      <path d="${legL}" fill="${wash}"/><path d="${legR}" fill="${wash}"/>
+      <path d="${legL}" fill="url(#dwash)"/><path d="${legR}" fill="url(#dwash)"/>
+      <path d="M114 ${waistY} L286 ${waistY} L286 ${waistY-24} Q200 ${waistY-40} 114 ${waistY-24} Z" fill="${wash}"/>
+      <path d="M114 ${waistY} L286 ${waistY} L286 ${waistY-24} Q200 ${waistY-40} 114 ${waistY-24} Z" fill="url(#dwash)"/>
+      <g fill="${wash}" stroke="rgba(0,0,0,.15)" stroke-width="1">
+        <rect x="128" y="${waistY-26}" width="8" height="20" rx="2"/><rect x="196" y="${waistY-30}" width="8" height="22" rx="2"/><rect x="264" y="${waistY-26}" width="8" height="20" rx="2"/></g>
+      <g stroke="${st}" stroke-width="2" fill="none" stroke-dasharray="5 4" stroke-linecap="round">
+        <path d="M114 ${waistY-22} Q200 ${waistY-36} 286 ${waistY-22}"/><path d="M114 ${waistY-4} L286 ${waistY-4}"/>
+        <path d="M200 ${waistY} L200 ${crotchY-2}"/><path d="M150 ${waistY+6} q-14 22 -6 46"/><path d="M250 ${waistY+6} q14 22 6 46"/>
+        <path d="M138 ${waistY+4} q-16 6 -20 34"/><path d="M262 ${waistY+4} q16 6 20 34"/></g>
+      <circle cx="200" cy="${waistY-2}" r="5" fill="${st}"/>
+      ${dz}${pocketTxt}
+      <g fill="none" stroke="rgba(0,0,0,.2)" stroke-width="2"><path d="${legL}"/><path d="${legR}"/></g>
+    </svg>`;
+  };
+
+  /* 饰品（帽子）：帽型/主色/滚边配色/刺绣文字可定制 */
+  window.accessorySVG = function(o){
+    o = o || {};
+    const type = o.type || "cap";
+    const c    = o.color || "#1f3a63";
+    const ac   = o.accent || "#e6b25e";
+    const txt  = (o.text || "").toUpperCase();
+    const label = t => txt ? `<text x="210" y="${t}" text-anchor="middle" font-size="20" font-weight="800" fill="${ac}" font-family="Arial" letter-spacing="1">${escapeHtml(txt)}</text>` : "";
+    let body;
+    if(type === "bucket"){
+      body = `<path d="M126 152 L152 92 L268 92 L294 152 Z" fill="${c}"/>
+        <path d="M126 152 L152 92 L268 92 L294 152 Z" fill="url(#hsh)"/>
+        <path d="M92 150 Q210 136 328 150 Q302 194 210 198 Q118 194 92 150 Z" fill="${c}"/>
+        <path d="M92 150 Q210 136 328 150 Q302 194 210 198 Q118 194 92 150 Z" fill="url(#hsh)"/>
+        <path d="M150 132 Q210 122 270 132" stroke="${ac}" stroke-width="5" fill="none"/>
+        ${label(126)}`;
+    } else if(type === "fedora"){
+      body = `<ellipse cx="210" cy="170" rx="154" ry="28" fill="${c}"/>
+        <ellipse cx="210" cy="170" rx="154" ry="28" fill="url(#hsh)"/>
+        <path d="M140 170 Q140 78 210 74 Q280 78 280 170 Z" fill="${c}"/>
+        <path d="M140 170 Q140 78 210 74 Q280 78 280 170 Z" fill="url(#hsh)"/>
+        <path d="M150 90 Q210 108 270 90" stroke="rgba(0,0,0,.18)" stroke-width="6" fill="none"/>
+        <path d="M140 150 L280 150 L280 168 L140 168 Z" fill="${ac}"/>
+        ${label(140)}`;
+    } else if(type === "beanie"){
+      body = `<path d="M130 178 Q130 82 210 80 Q290 82 290 178 Z" fill="${c}"/>
+        <path d="M130 178 Q130 82 210 80 Q290 82 290 178 Z" fill="url(#hsh)"/>
+        <g stroke="rgba(0,0,0,.12)" stroke-width="3" fill="none">
+          <path d="M158 96 L158 172 M186 86 L186 178 M214 82 L214 180 M242 86 L242 178 M270 96 L270 172"/></g>
+        <rect x="120" y="168" width="180" height="34" rx="16" fill="${ac}"/>
+        ${txt?`<text x="210" y="192" text-anchor="middle" font-size="18" font-weight="800" fill="${c}" font-family="Arial" letter-spacing="1">${escapeHtml(txt)}</text>`:""}`;
+    } else { // cap 棒球帽
+      body = `<path d="M118 176 Q120 96 214 92 Q312 96 320 176 Q220 162 118 176 Z" fill="${c}"/>
+        <path d="M118 176 Q120 96 214 92 Q312 96 320 176 Q220 162 118 176 Z" fill="url(#hsh)"/>
+        <path d="M118 176 Q62 176 58 200 Q150 216 220 202 Q168 184 118 176 Z" fill="${ac}"/>
+        <path d="M118 176 Q62 176 58 200 Q150 216 220 202 Q168 184 118 176 Z" fill="url(#hsh)"/>
+        <g stroke="rgba(0,0,0,.12)" stroke-width="2" fill="none">
+          <path d="M214 92 L180 168 M214 92 L214 166 M214 92 L250 168"/></g>
+        <circle cx="214" cy="96" r="6" fill="${ac}"/>
+        ${label(150)}`;
+    }
+    return `<svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="hsh" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(255,255,255,.18)"/><stop offset=".55" stop-color="rgba(255,255,255,0)"/>
+        <stop offset="1" stop-color="rgba(0,0,0,.16)"/></linearGradient></defs>
+      ${body}
+      <g fill="none" stroke="rgba(0,0,0,.16)" stroke-width="2"></g>
+    </svg>`;
+  };
+
   /* 商品展示图：优先用真实图片（时尚模特图），加载失败自动回退到备用图；
      球衣/球鞋（保留供定制）无图片时用 SVG 生成图 */
   window.productMedia = function(p){
