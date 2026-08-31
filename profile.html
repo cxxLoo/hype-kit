@@ -54,9 +54,34 @@
         <button class="btn dark" id="pw-save">修改密码</button>
         <div class="prof-msg" id="pw-msg"></div>
       </div>
+
+      <!-- 收货地址 -->
+      <div class="prof-card prof-addr" id="addresses">
+        <div class="addr-head">
+          <h3>收货地址</h3>
+          <button class="btn dark sm" id="addr-add">＋ 新增地址</button>
+        </div>
+        <div class="addr-list" id="addr-list"><div class="addr-empty">加载中…</div></div>
+      </div>
     </div>
   </div>
 </section>
+
+<!-- 地址编辑弹窗 -->
+<div class="modal-mask" id="addr-mask">
+  <form class="modal-box" id="addr-form">
+    <h3 id="addr-title">新增收货地址</h3>
+    <div class="mfield"><label>收货人 *</label><input id="ad-name" required maxlength="20" placeholder="请输入姓名"></div>
+    <div class="mfield"><label>手机号 *</label><input id="ad-phone" required maxlength="20" placeholder="请输入手机号"></div>
+    <div class="mfield"><label>收货地址 *</label><textarea id="ad-addr" required maxlength="120" placeholder="省市区 + 详细地址"></textarea></div>
+    <label class="addr-defck"><input type="checkbox" id="ad-default"> 设为默认地址</label>
+    <div class="modal-actions">
+      <button type="button" class="btn" style="border:1px solid #e5e5e5" id="ad-cancel">取消</button>
+      <button type="submit" class="btn dark" id="ad-submit">保存</button>
+    </div>
+    <div class="co-err" id="ad-err"></div>
+  </form>
+</div>
 
 <div id="footer-slot"></div>
 
@@ -152,6 +177,91 @@
   function msg(id, text, ok){
     const el = $(id); el.textContent = text; el.style.color = ok ? "#0f8a44" : "#f60c1a";
   }
+
+  /* ================= 收货地址管理 ================= */
+  let addrs = [];
+  let editAddrId = null;
+
+  async function loadAddrs(){
+    const { data, error } = await sb.from("addresses").select("*")
+      .eq("user_id", user.id).order("is_default",{ascending:false}).order("created_at",{ascending:false});
+    if(error){ $("addr-list").innerHTML = `<div class="addr-empty">加载失败：${escapeHtml(error.message)}</div>`; return; }
+    addrs = data || [];
+    renderAddrs();
+  }
+  function renderAddrs(){
+    if(!addrs.length){
+      $("addr-list").innerHTML = `<div class="addr-empty">还没有收货地址，点右上角「新增地址」，结算时即可一键选择。</div>`;
+      return;
+    }
+    $("addr-list").innerHTML = addrs.map(a=>`
+      <div class="addr-item ${a.is_default?'is-default':''}">
+        <div class="addr-main">
+          <div class="addr-line1"><b>${escapeHtml(a.recipient)}</b><span>${escapeHtml(a.phone)}</span>${a.is_default?'<em class="addr-tag">默认</em>':''}</div>
+          <div class="addr-line2">${escapeHtml(a.address)}</div>
+        </div>
+        <div class="addr-ops">
+          ${a.is_default?'':`<button data-def="${a.id}">设为默认</button>`}
+          <button data-edit="${a.id}">编辑</button>
+          <button class="danger" data-del="${a.id}">删除</button>
+        </div>
+      </div>`).join("");
+    $("addr-list").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openAddr(b.dataset.edit)));
+    $("addr-list").querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>delAddr(b.dataset.del)));
+    $("addr-list").querySelectorAll("[data-def]").forEach(b=>b.addEventListener("click",()=>setDefault(b.dataset.def)));
+  }
+  function openAddr(id){
+    editAddrId = id || null;
+    const a = id ? addrs.find(x=>x.id===id) : null;
+    $("addr-title").textContent = a ? "编辑收货地址" : "新增收货地址";
+    $("ad-name").value = a ? a.recipient : "";
+    $("ad-phone").value = a ? a.phone : "";
+    $("ad-addr").value = a ? a.address : "";
+    $("ad-default").checked = a ? a.is_default : (addrs.length===0);
+    $("ad-err").textContent = "";
+    $("addr-mask").classList.add("show");
+  }
+  function closeAddr(){ $("addr-mask").classList.remove("show"); }
+  $("addr-add").addEventListener("click", ()=>openAddr(null));
+  $("ad-cancel").addEventListener("click", closeAddr);
+  $("addr-mask").addEventListener("click", e=>{ if(e.target.id==="addr-mask") closeAddr(); });
+
+  $("addr-form").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const recipient = $("ad-name").value.trim(), phone = $("ad-phone").value.trim(), address = $("ad-addr").value.trim();
+    if(!recipient || !phone || !address){ $("ad-err").textContent = "请填写完整收货信息"; return; }
+    const wantDefault = $("ad-default").checked;
+    const btn = $("ad-submit"); btn.disabled = true; btn.textContent = "保存中…";
+    try{
+      let savedId = editAddrId;
+      if(editAddrId){
+        const { error } = await sb.from("addresses").update({ recipient, phone, address }).eq("id", editAddrId);
+        if(error) throw error;
+      }else{
+        const { data, error } = await sb.from("addresses").insert({ user_id:user.id, recipient, phone, address, is_default:false }).select("id").single();
+        if(error) throw error;
+        savedId = data.id;
+      }
+      if(wantDefault && savedId) await applyDefault(savedId);
+      closeAddr(); await loadAddrs();
+    }catch(err){ $("ad-err").textContent = "保存失败：" + (err.message||err); }
+    btn.disabled = false; btn.textContent = "保存";
+  });
+
+  async function applyDefault(id){
+    await sb.from("addresses").update({ is_default:false }).eq("user_id", user.id).neq("id", id);
+    await sb.from("addresses").update({ is_default:true }).eq("id", id);
+  }
+  async function setDefault(id){ await applyDefault(id); await loadAddrs(); }
+  async function delAddr(id){
+    if(!confirm("确定删除该收货地址？")) return;
+    const { error } = await sb.from("addresses").delete().eq("id", id);
+    if(error){ alert("删除失败：" + error.message); return; }
+    loadAddrs();
+  }
+
+  loadAddrs();
+  if(location.hash === "#addresses"){ document.getElementById("addresses").scrollIntoView({behavior:"smooth"}); }
 })();
 </script>
 </body>

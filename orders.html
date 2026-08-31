@@ -20,6 +20,18 @@
 
 <div id="footer-slot"></div>
 
+<!-- 扫码支付弹窗 -->
+<div class="modal-mask" id="qr-mask">
+  <div class="modal-box qr-box">
+    <h3>扫码支付</h3>
+    <div id="qr-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" style="border:1px solid #e5e5e5" id="qr-close">关闭</button>
+      <button type="button" class="btn dark" id="qr-done">我已完成支付</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/vendor/supabase.js"></script>
 <script src="js/config.js?v=20260901"></script>
 <script src="js/data.js?v=20260901"></script>
@@ -54,6 +66,7 @@ function actions(o){
   const btns = [];
   if(o.status==="pending_payment"){
     btns.push(`<button class="btn dark sm" data-act="pay" data-t="${o.token}">模拟支付</button>`);
+    btns.push(`<button class="btn sm scan" data-act="qr" data-t="${o.token}">扫码支付</button>`);
     btns.push(`<button class="btn sm outline" data-act="cancel" data-t="${o.token}">取消订单</button>`);
   }else if(o.status==="paid"){
     btns.push(`<span class="wait">已付款，等待商家发货</span>`);
@@ -121,6 +134,7 @@ async function load(){
 
   root.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click", async ()=>{
     const act = b.dataset.act;
+    if(act==="qr"){ openQR(b.dataset.t); return; }
     if(act==="cancel" && !confirm("确定取消该订单？")) return;
     b.disabled = true;
     const { error } = await sb.rpc("guest_order_action", { p_token:b.dataset.t, p_action:act });
@@ -129,6 +143,33 @@ async function load(){
     load();
   }));
 }
+
+/* ---------- 扫码支付 ---------- */
+function openQR(token){
+  const url = (window.SITE && window.SITE.pay_qr_url) || "";
+  const note = (window.SITE && window.SITE.pay_note) || "请扫码支付，支付完成后点击「我已完成支付」。";
+  const body = document.getElementById("qr-body");
+  if(url){
+    body.innerHTML = `<img class="qr-img" src="${escapeHtml(url)}" alt="收款码"><p class="qr-note">${escapeHtml(note)}</p>`;
+  }else{
+    body.innerHTML = `<div class="qr-none">商家尚未上传收款码，请稍后再试或使用「模拟支付」。</div>`;
+  }
+  const done = document.getElementById("qr-done");
+  done.style.display = url ? "" : "none";
+  done.onclick = async ()=>{
+    done.disabled = true;
+    const { error } = await sb.rpc("guest_order_action", { p_token:token, p_action:"pay" });
+    done.disabled = false;
+    if(error){ toast("操作失败：" + error.message); return; }
+    document.getElementById("qr-mask").classList.remove("show");
+    toast("支付成功");
+    load();
+  };
+  document.getElementById("qr-mask").classList.add("show");
+}
+document.getElementById("qr-close").addEventListener("click", ()=> document.getElementById("qr-mask").classList.remove("show"));
+document.getElementById("qr-mask").addEventListener("click", e=>{ if(e.target.id==="qr-mask") document.getElementById("qr-mask").classList.remove("show"); });
+
 load();
 })();
 </script>

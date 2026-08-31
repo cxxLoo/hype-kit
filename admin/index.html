@@ -44,6 +44,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M17 8l2 2 3-3.5"/></svg>
         <span>账号管理</span>
       </div>
+      <div class="tab" data-tab="payment" data-crumb="支付管理">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+        <span>支付管理</span>
+      </div>
     </nav>
     <div class="side-foot">
       <a class="btn ghost sm block" href="../index.html" target="_blank">查看网站 ↗</a>
@@ -204,6 +208,31 @@
           </div>
           <p class="hint" style="margin-bottom:14px">这里管理所有注册用户，可授予 / 取消「管理员」身份。管理员才能登录本后台。</p>
           <div id="account-list"><div class="loading">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 支付管理 -->
+      <section id="tab-payment" style="display:none">
+        <div class="panel">
+          <div class="bar">
+            <h2>收款码</h2>
+            <button class="btn brand" id="pay-save">保存</button>
+          </div>
+          <p class="hint" style="margin-bottom:14px">上传的收款码会显示在前台「我的订单 → 扫码支付」弹窗中。支持微信 / 支付宝收款码，建议正方形图片。</p>
+          <div class="pay-grid">
+            <div class="pay-preview" id="pay-preview"><div class="pay-none">暂无收款码</div></div>
+            <div class="pay-form">
+              <div class="fld">
+                <label>上传收款码图片</label>
+                <input id="pay-file" type="file" accept="image/*">
+                <div class="hint" id="pay-hint">选择图片后点右上角「保存」即生效。</div>
+              </div>
+              <div class="fld">
+                <label>收款说明文字</label>
+                <textarea id="pay-note" style="min-height:90px" placeholder="如：支付完成后请点击「我已完成支付」。"></textarea>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

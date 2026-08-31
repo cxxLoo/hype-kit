@@ -21,9 +21,12 @@
 <div class="modal-mask" id="checkout-mask">
   <form class="modal-box" id="checkout-form">
     <h3>填写收货信息</h3>
-    <div class="mfield"><label>收货人 *</label><input id="co-name" required maxlength="20" placeholder="请输入姓名"></div>
-    <div class="mfield"><label>手机号 *</label><input id="co-phone" required maxlength="20" placeholder="请输入手机号"></div>
-    <div class="mfield"><label>收货地址 *</label><textarea id="co-address" required maxlength="120" placeholder="省市区 + 详细地址"></textarea></div>
+    <div id="co-saved" class="co-saved" style="display:none"></div>
+    <div id="co-manual">
+      <div class="mfield"><label>收货人 *</label><input id="co-name" maxlength="20" placeholder="请输入姓名"></div>
+      <div class="mfield"><label>手机号 *</label><input id="co-phone" maxlength="20" placeholder="请输入手机号"></div>
+      <div class="mfield"><label>收货地址 *</label><textarea id="co-address" maxlength="120" placeholder="省市区 + 详细地址"></textarea></div>
+    </div>
     <div class="mfield"><label>备注（可选）</label><input id="co-remark" maxlength="60" placeholder="尺码/配送要求等"></div>
     <div class="co-summary" id="co-summary"></div>
     <div class="modal-actions">
@@ -97,13 +100,52 @@ function render(){
 }
 
 /* ---------- 结算 ---------- */
-function openCheckout(){
+let coAddrs = [];        // 已保存地址
+let coSelected = null;   // 选中的地址 id；null = 使用新地址（手动输入）
+
+async function loadCoAddrs(){
+  const uid = window.currentUserId && window.currentUserId();
+  if(!uid){ coAddrs = []; return; }
+  try{
+    const { data } = await sb.from("addresses").select("*").eq("user_id", uid)
+      .order("is_default",{ascending:false}).order("created_at",{ascending:false});
+    coAddrs = data || [];
+  }catch(e){ coAddrs = []; }
+}
+function renderCoAddrs(){
+  const box = $("co-saved"), manual = $("co-manual");
+  if(!coAddrs.length){ box.style.display="none"; manual.style.display=""; coSelected=null; return; }
+  box.style.display = "";
+  const cards = coAddrs.map(a=>`
+    <label class="co-addr ${coSelected===a.id?'on':''}">
+      <input type="radio" name="co-addr" value="${a.id}" ${coSelected===a.id?'checked':''}>
+      <div class="co-addr-b">
+        <div class="co-addr-1"><b>${escapeHtml(a.recipient)}</b><span>${escapeHtml(a.phone)}</span>${a.is_default?'<em>默认</em>':''}</div>
+        <div class="co-addr-2">${escapeHtml(a.address)}</div>
+      </div>
+    </label>`).join("");
+  box.innerHTML = cards +
+    `<label class="co-addr co-addr-new ${coSelected===null?'on':''}">
+       <input type="radio" name="co-addr" value="" ${coSelected===null?'checked':''}>
+       <div class="co-addr-b"><b>＋ 使用新地址</b><span class="co-addr-2">手动填写一个新的收货地址</span></div>
+     </label>
+     <a class="co-addr-manage" href="profile.html#addresses">管理收货地址 →</a>`;
+  manual.style.display = coSelected===null ? "" : "none";
+  box.querySelectorAll('input[name="co-addr"]').forEach(r=>r.addEventListener("change",()=>{
+    coSelected = r.value || null;
+    renderCoAddrs();
+  }));
+}
+async function openCheckout(){
   const total = Cart.total(), ship = shipOf(total);
   $("co-summary").innerHTML =
     `<div class="sum-row"><span>商品小计</span><span>¥${total}</span></div>
      <div class="sum-row"><span>配送费</span><span>${ship?"¥"+ship:"免运费"}</span></div>
      <div class="sum-row total"><span>应付合计</span><span>¥${total+ship}</span></div>`;
   $("co-err").textContent = "";
+  await loadCoAddrs();
+  coSelected = coAddrs.length ? (coAddrs.find(a=>a.is_default)||coAddrs[0]).id : null;
+  renderCoAddrs();
   $("checkout-mask").classList.add("show");
 }
 $("co-cancel").addEventListener("click", ()=> $("checkout-mask").classList.remove("show"));
@@ -113,13 +155,23 @@ $("checkout-form").addEventListener("submit", async (e)=>{
   e.preventDefault();
   const list = Cart.all();
   if(!list.length){ $("checkout-mask").classList.remove("show"); return; }
+  // 取收货信息：选中已存地址 或 手动输入
+  let name, phone, address;
+  if(coSelected){
+    const a = coAddrs.find(x=>x.id===coSelected);
+    if(!a){ $("co-err").textContent = "请选择收货地址"; return; }
+    name=a.recipient; phone=a.phone; address=a.address;
+  }else{
+    name=$("co-name").value.trim(); phone=$("co-phone").value.trim(); address=$("co-address").value.trim();
+    if(!name || !phone || !address){ $("co-err").textContent = "请填写完整收货信息"; return; }
+  }
   const btn = $("co-submit"); btn.disabled = true; btn.textContent = "提交中…";
   $("co-err").textContent = "";
   try{
     const total = Cart.total(), ship = shipOf(total);
     const items = list.map(it=>({ title:it.title, price:it.price, qty:it.qty, size:it.size||"", meta:it.meta||"", svg:it.svg||"" }));
     const { data, error } = await sb.rpc("place_order", {
-      p_name:$("co-name").value, p_phone:$("co-phone").value, p_address:$("co-address").value,
+      p_name:name, p_phone:phone, p_address:address,
       p_remark:$("co-remark").value, p_items:items, p_total:total, p_ship_fee:ship
     });
     if(error) throw error;

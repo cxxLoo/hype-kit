@@ -505,6 +505,7 @@
           <div class="acct-meta"><b>${escapeHtml(name)}</b><span>${escapeHtml(email)}</span></div>
         </div>
         <a href="profile.html">个人信息</a>
+        <a href="profile.html#addresses">收货地址</a>
         <a href="profile.html#password">密码修改</a>
         <a href="orders.html">我的订单</a>
         <a href="favorites.html">我的收藏</a>

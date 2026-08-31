@@ -37,7 +37,7 @@
   }
 
   /* ---------- 标签页切换 ---------- */
-  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts" };
+  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts", payment:"tab-payment" };
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
@@ -48,6 +48,7 @@
     if(k==="feedback") loadFeedback();
     if(k==="faqs") loadFaqs();
     if(k==="accounts") loadAccounts();
+    if(k==="payment") loadPayment();
   }));
 
   /* ---------- 退出 ---------- */
@@ -270,6 +271,47 @@
     btn.disabled = false; btn.textContent = "保存文案";
     if(error){ toast("保存失败：" + error.message); return; }
     toast("文案已保存，刷新前端即可看到");
+  });
+
+  /* ================= 支付管理（收款码） ================= */
+  let payQrUrl = "";
+
+  async function loadPayment(){
+    const { data } = await sb.from("site_content").select("key,value").in("key", ["pay_qr_url","pay_note"]);
+    const map = {}; (data||[]).forEach(r=>map[r.key]=r.value);
+    payQrUrl = map.pay_qr_url || "";
+    $("pay-note").value = map.pay_note || "";
+    renderPayPreview();
+  }
+  function renderPayPreview(){
+    $("pay-preview").innerHTML = payQrUrl
+      ? `<img src="${escapeHtml(payQrUrl)}" alt="收款码">`
+      : `<div class="pay-none">暂无收款码</div>`;
+  }
+
+  $("pay-file").addEventListener("change", async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(!/^image\//.test(file.type)){ toast("请选择图片文件"); return; }
+    $("pay-hint").textContent = "上传中…";
+    try{
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `payment/qr-${Date.now()}.${ext}`;
+      const { error } = await sb.storage.from(SB_BUCKET).upload(path, file, { upsert:true, cacheControl:"3600" });
+      if(error) throw error;
+      const { data } = sb.storage.from(SB_BUCKET).getPublicUrl(path);
+      payQrUrl = data.publicUrl;
+      renderPayPreview();
+      $("pay-hint").textContent = "已上传，点右上角「保存」即生效。";
+    }catch(err){ $("pay-hint").textContent = "上传失败：" + err.message; }
+  });
+
+  $("pay-save").addEventListener("click", async ()=>{
+    const btn = $("pay-save"); btn.disabled = true; btn.textContent = "保存中…";
+    const rows = [{ key:"pay_qr_url", value:payQrUrl }, { key:"pay_note", value:$("pay-note").value }];
+    const { error } = await sb.from("site_content").upsert(rows);
+    btn.disabled = false; btn.textContent = "保存";
+    if(error){ toast("保存失败：" + error.message); return; }
+    toast("收款码已保存，前台刷新即可看到");
   });
 
   /* ================= 订单管理 ================= */
