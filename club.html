@@ -104,9 +104,10 @@
 <script src="js/shared.js?v=20260901"></script>
 <script>
 (async function(){
-  await loadContent();
-  await loadUserData();
-  mountChrome("club");
+await loadContent();
+if(!guardModule("club")) return;
+await loadUserData();
+mountChrome("club");
 
   const $ = id=>document.getElementById(id);
   const LIKED_KEY = "hk_liked_posts_v1";

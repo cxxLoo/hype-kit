@@ -97,7 +97,7 @@
     const media = productMedia(p);
     const href = p.cat==="footwear" ? "footwear.html"
                : p.cat==="clothing" ? "clothing.html"
-               : "customize.html?id=" + p.id;
+               : (moduleEnabled("custom") ? "customize.html?id=" + p.id : "clothing.html");
     return `<a class="card" href="${href}">
       <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}${media}</div>
       <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>

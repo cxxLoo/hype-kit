@@ -37,7 +37,7 @@
   }
 
   /* ---------- 标签页切换 ---------- */
-  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts", payment:"tab-payment" };
+  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts", payment:"tab-payment", modules:"tab-modules" };
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
@@ -49,6 +49,7 @@
     if(k==="faqs") loadFaqs();
     if(k==="accounts") loadAccounts();
     if(k==="payment") loadPayment();
+    if(k==="modules") loadModules();
   }));
 
   /* ---------- 退出 ---------- */
@@ -312,6 +313,27 @@
     btn.disabled = false; btn.textContent = "保存";
     if(error){ toast("保存失败：" + error.message); return; }
     toast("收款码已保存，前台刷新即可看到");
+  });
+
+  /* ================= 模块管理（前台入口开关） ================= */
+  const MOD_KEYS = ["custom","service","club"];
+
+  async function loadModules(){
+    const { data } = await sb.from("site_content").select("key,value").in("key", MOD_KEYS.map(k=>"mod_"+k));
+    const map = {}; (data||[]).forEach(r=>map[r.key]=r.value);
+    MOD_KEYS.forEach(k=>{
+      const on = String(map["mod_"+k] || "on").toLowerCase() !== "off";
+      $("mod-"+k).checked = on;
+    });
+  }
+
+  $("mod-save").addEventListener("click", async ()=>{
+    const btn = $("mod-save"); btn.disabled = true; btn.textContent = "保存中…";
+    const rows = MOD_KEYS.map(k=>({ key:"mod_"+k, value: $("mod-"+k).checked ? "on" : "off" }));
+    const { error } = await sb.from("site_content").upsert(rows);
+    btn.disabled = false; btn.textContent = "保存";
+    if(error){ toast("保存失败：" + error.message); return; }
+    toast("模块开关已保存，前台刷新即可生效");
   });
 
   /* ================= 订单管理 ================= */

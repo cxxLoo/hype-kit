@@ -151,6 +151,7 @@
 <script>
 (async function(){
 await loadSiteData();
+if(!guardModule("custom")) return;
 mountChrome("custom");
 
 // 时尚色板：牛仔水洗色 / 中性上衣色 / 帽饰配色

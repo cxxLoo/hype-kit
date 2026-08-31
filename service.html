@@ -75,8 +75,9 @@
 <script src="js/chat.js?v=20260901"></script>
 <script>
 (async function(){
-  await loadContent();
-  mountChrome("service");
+await loadContent();
+if(!guardModule("service")) return;
+mountChrome("service");
   await HypeBot.loadFAQs();   // 从后台知识库加载最新话术（失败自动用内置）
 
   const body  = document.getElementById("cs-body");

@@ -42,3 +42,11 @@ insert into public.site_content (key, value) values
   ('pay_qr_url', ''),
   ('pay_note',   '请使用微信 / 支付宝扫码支付，支付完成后点击「我已完成支付」。')
 on conflict (key) do nothing;
+
+-- ---------- 4. 前台模块开关（可选，缺省即为开启） ----------
+--  值 on = 显示入口并可用；off = 前台隐藏入口且直接访问跳回首页
+insert into public.site_content (key, value) values
+  ('mod_custom',  'on'),   -- 专属定制
+  ('mod_service', 'on'),   -- 客服中心
+  ('mod_club',    'on')    -- 俱乐部
+on conflict (key) do nothing;

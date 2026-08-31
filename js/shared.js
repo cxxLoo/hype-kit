@@ -406,7 +406,20 @@
   const NIKE_LOGO = `<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" aria-label="logo">
     <path d="M40 150 C60 60 200 -10 620 20 C300 60 180 120 120 150 C90 165 55 165 40 150 Z" fill="#111"/></svg>`;
 
+  /* 模块开关：site_content 里 mod_custom / mod_service / mod_club，值 off 关闭，缺省=开 */
+  window.moduleEnabled = function(key){
+    const C = window.SITE || window.DEFAULT_CONTENT || {};
+    return String(C["mod_" + key] || "on").toLowerCase() !== "off";
+  };
+  /* 页面守卫：模块关闭时禁止直接访问，回到首页 */
+  window.guardModule = function(key){
+    if(!window.moduleEnabled(key)){ location.replace("index.html"); return false; }
+    return true;
+  };
+  const moduleEnabled = window.moduleEnabled;
+
   window.mountChrome = function(active){
+    window.__activeNav = active;
     const C = window.SITE || window.DEFAULT_CONTENT || {};
     const nav = document.getElementById("nav-slot");
     if(nav){
@@ -418,10 +431,10 @@
           <a href="index.html" data-k="home">首页</a>
           <a href="clothing.html" data-k="clothing">服装商城</a>
           <a href="footwear.html" data-k="footwear">鞋帽商城</a>
-          <a href="customize.html" data-k="custom">专属定制</a>
-          <a href="service.html" data-k="service">客服中心</a>
+          ${moduleEnabled("custom") ? `<a href="customize.html" data-k="custom">专属定制</a>` : ""}
+          ${moduleEnabled("service") ? `<a href="service.html" data-k="service">客服中心</a>` : ""}
           <a href="orders.html" data-k="orders">我的订单</a>
-          <a href="club.html" data-k="club">俱乐部</a>
+          ${moduleEnabled("club") ? `<a href="club.html" data-k="club">俱乐部</a>` : ""}
         </div>
         <div class="nav-right">
           <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#111" stroke-width="2"/><path d="M20 20l-3-3" stroke="#111" stroke-width="2"/></svg><input placeholder="搜索牛仔裤、鞋帽"></div>
@@ -447,8 +460,8 @@
         <div class="foot-grid">
           <div><div class="logo" style="margin-bottom:14px">${NIKE_LOGO}<span class="brand" style="color:#fff">HYPE KIT</span></div>
             <p style="color:#aaa;font-size:14px;max-width:320px">${C.footer_about || ""}</p></div>
-          <div><h5>选购</h5><a href="clothing.html">服装商城</a><a href="footwear.html">鞋帽商城</a><a href="customize.html">专属定制</a><a href="clothing.html">新品上市</a></div>
-          <div><h5>帮助</h5><a href="#">配送与退换</a><a href="#">尺码指南</a><a href="#">定制说明</a><a href="service.html">联系客服</a></div>
+          <div><h5>选购</h5><a href="clothing.html">服装商城</a><a href="footwear.html">鞋帽商城</a>${moduleEnabled("custom")?`<a href="customize.html">专属定制</a>`:""}<a href="clothing.html">新品上市</a></div>
+          <div><h5>帮助</h5><a href="#">配送与退换</a><a href="#">尺码指南</a><a href="#">定制说明</a>${moduleEnabled("service")?`<a href="service.html">联系客服</a>`:""}</div>
           <div><h5>关于</h5><a href="#">品牌故事</a><a href="#">俱乐部合作</a><a href="#">加入我们</a><a href="#">隐私政策</a></div>
         </div>
         <div class="foot-bottom"><span>© 2026 HYPE KIT 全球时尚牛仔. 本站为演示 Demo,非真实交易。</span><span>中国大陆 · 简体中文</span></div>
@@ -459,6 +472,14 @@
     refreshAccount();
     if(window.loadUserData) window.loadUserData();
   };
+
+  /* 后台静默刷新拉到最新文案后，同步重绘导航（模块开关即时生效） */
+  if(!window.__navSync){
+    window.__navSync = true;
+    document.addEventListener("hk:data", function(){
+      if(typeof window.__activeNav !== "undefined" && document.getElementById("nav-slot")) window.mountChrome(window.__activeNav);
+    });
+  }
 
   function avatarInner(name, url){
     if(url) return `<img src="${escapeHtml(url)}" alt="">`;
