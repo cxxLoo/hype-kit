@@ -1,7 +1,8 @@
 /* ================= 数据层：从 Supabase 读取，失败时回退本地示例 ================= */
 
-/* 时尚图片工具：Unsplash 主图，若失效由 productMedia 自动回退到备用图 */
-const U = id => "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&w=700&q=80";
+/* 时尚图片工具：Unsplash 主图，若失效由 productMedia 自动回退到备用图
+ * 缩小尺寸(w=500,q=70)以加快加载；卡片展示足够清晰 */
+const U = id => "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&w=500&q=70";
 
 /* 兜底商品数据：Supabase 未配置或表为空时使用，保证页面永不空白
  * cat: clothing(服装商城) | footwear(鞋帽商城) | jersey/shoe(保留，供「专属定制」使用)
@@ -97,6 +98,32 @@ window.DEFAULT_CONTENT = {
 window.PRODUCTS = [];
 window.SITE = Object.assign({}, window.DEFAULT_CONTENT);
 
+/* ================= 本地缓存（Stale-While-Revalidate） =================
+ * 首屏瞬时渲染：先用缓存/兜底立即出图，再后台静默刷新，达到「淘宝级」秒开体验。 */
+const CACHE_KEY = "hk_cache_v2";
+const CACHE_TTL = 5 * 60 * 1000;   // 5 分钟内视为新鲜，直接用缓存不阻塞
+const NET_TIMEOUT = 3500;          // 冷启动最多等 3.5s 网络，超时先用缓存/兜底渲染
+
+function readCache(){
+  try{ return JSON.parse(localStorage.getItem(CACHE_KEY)); }catch(e){ return null; }
+}
+function writeCache(patch){
+  try{
+    const cur = readCache() || {};
+    Object.assign(cur, patch, { t: Date.now() });
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cur));
+  }catch(e){}
+}
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+/* 同步用缓存/兜底填充全局，保证页面首帧就有内容 */
+(function primeFromCache(){
+  const c = readCache();
+  if(c && c.content) window.SITE = Object.assign({}, window.DEFAULT_CONTENT, c.content);
+  if(c && Array.isArray(c.products) && c.products.length) window.PRODUCTS = c.products;
+  else window.PRODUCTS = window.FALLBACK_PRODUCTS.slice();
+})();
+
 /* 从数据库行 → 前端商品对象 */
 function rowToProduct(r){
   return {
@@ -106,37 +133,54 @@ function rowToProduct(r){
   };
 }
 
-/* 加载商品；失败或为空 → 回退示例数据 */
+/* 加载商品；失败或为空 → 回退示例数据；成功写入缓存 */
 window.loadProducts = async function(){
   try{
     const { data, error } = await window.sb
       .from("products").select("*").order("sort", { ascending: true });
     if(error) throw error;
     window.PRODUCTS = (data && data.length) ? data.map(rowToProduct) : window.FALLBACK_PRODUCTS.slice();
+    if(data && data.length) writeCache({ products: window.PRODUCTS });
   }catch(e){
     console.warn("[data] 商品加载失败，使用本地示例：", e.message);
-    window.PRODUCTS = window.FALLBACK_PRODUCTS.slice();
+    if(!window.PRODUCTS.length) window.PRODUCTS = window.FALLBACK_PRODUCTS.slice();
   }
   return window.PRODUCTS;
 };
 
-/* 加载站点文案；缺失的键用默认值补齐 */
+/* 加载站点文案；缺失的键用默认值补齐；成功写入缓存 */
 window.loadContent = async function(){
   try{
     const { data, error } = await window.sb.from("site_content").select("key,value");
     if(error) throw error;
+    const raw = {};
     const map = Object.assign({}, window.DEFAULT_CONTENT);
-    (data || []).forEach(r => { if(r.value != null && r.value !== "") map[r.key] = r.value; });
+    (data || []).forEach(r => { if(r.value != null && r.value !== ""){ map[r.key] = r.value; raw[r.key] = r.value; } });
     window.SITE = map;
+    writeCache({ content: raw });
   }catch(e){
     console.warn("[data] 文案加载失败，使用默认文案：", e.message);
-    window.SITE = Object.assign({}, window.DEFAULT_CONTENT);
+    if(!window.SITE || !Object.keys(window.SITE).length) window.SITE = Object.assign({}, window.DEFAULT_CONTENT);
   }
   return window.SITE;
 };
 
-/* 一次性加载前端所需全部数据 */
+/* 后台静默刷新：拉最新数据 → 更新缓存 → 广播 hk:data 供页面按需重绘 */
+function revalidate(){
+  return Promise.all([window.loadContent(), window.loadProducts()]).then(()=>{
+    try{ document.dispatchEvent(new Event("hk:data")); }catch(e){}
+  });
+}
+
+/* 一次性加载前端所需全部数据（SWR：缓存新鲜则秒开；否则限时等网络） */
 window.loadSiteData = async function(){
-  await Promise.all([window.loadContent(), window.loadProducts()]);
-  if(window.loadUserData) await window.loadUserData();
+  const c = readCache();
+  const fresh = c && c.content && Array.isArray(c.products) && c.products.length && (Date.now() - c.t < CACHE_TTL);
+  if(fresh){
+    revalidate();                          // 后台刷新，不阻塞首屏
+  }else{
+    await Promise.race([ revalidate(), delay(NET_TIMEOUT) ]);   // 冷启动限时等待
+    if(!window.PRODUCTS.length) window.PRODUCTS = window.FALLBACK_PRODUCTS.slice();
+  }
+  if(window.loadUserData) window.loadUserData();   // 用户数据后台加载，不阻塞首屏
 };

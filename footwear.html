@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>鞋帽商城 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260828">
+<link rel="stylesheet" href="css/style.css?v=20260901">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -67,15 +67,15 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260828"></script>
-<script src="js/data.js?v=20260828"></script>
-<script src="js/shared.js?v=20260828"></script>
+<script src="js/config.js?v=20260901"></script>
+<script src="js/data.js?v=20260901"></script>
+<script src="js/shared.js?v=20260901"></script>
 <script>
 (async function(){
   await loadSiteData();
   mountChrome("footwear");
 
-  const all = PRODUCTS.filter(p=>p.cat==="footwear");
+  let all = PRODUCTS.filter(p=>p.cat==="footwear");
   const qs = new URLSearchParams(location.search);
   let kind = ["shoe","hat"].includes(qs.get("k")) ? qs.get("k") : "all";
   let sortMode = "default";
@@ -104,6 +104,8 @@
   }
   syncChips();
   render();
+
+  document.addEventListener("hk:data", ()=>{ all = PRODUCTS.filter(p=>p.cat==="footwear"); render(); });
 
   document.getElementById("k-filter").addEventListener("click", e=>{
     const b = e.target.closest("[data-k]"); if(!b) return;

@@ -187,11 +187,43 @@
   window.productMedia = function(p){
     if(p && p.image_url){
       const seed = encodeURIComponent((p && p.id) || "hk");
-      const fb = "https://picsum.photos/seed/" + seed + "/700/900";
-      return `<img class="pm-img" src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name||"")}" loading="lazy" onerror="this.onerror=null;this.src='${fb}'">`;
+      const fb = "https://picsum.photos/seed/" + seed + "/500/620";
+      return `<img class="pm-img" src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name||"")}" loading="lazy" decoding="async" data-fb="${fb}" onload="this.classList.add('is-loaded')" onerror="window.__imgFallback&&window.__imgFallback(this)">`;
     }
     return p && p.cat === "shoe" ? shoeSVG(p.opts) : jerseySVG(p ? p.opts : {});
   };
+
+  /* ---------- 图片守护：慢/失败自动降级，避免「几分钟白图」 ---------- */
+  window.__imgFallback = function(img){
+    const tries = +(img.dataset.fbtry || 0);
+    if(tries >= 1){ img.classList.add("is-loaded","is-error"); return; }  // 二次失败：停手，显示占位底
+    img.dataset.fbtry = tries + 1;
+    const fb = img.dataset.fb;
+    if(fb){ img.src = fb; } else { img.classList.add("is-loaded","is-error"); }
+  };
+  (function watchImages(){
+    const TIMEOUT = 6000;
+    function arm(img){
+      if(img.dataset.hkw) return; img.dataset.hkw = "1";
+      if(img.complete && img.naturalWidth > 0){ img.classList.add("is-loaded"); return; }
+      const t = setTimeout(()=>{
+        if(!(img.complete && img.naturalWidth > 0)) window.__imgFallback(img);  // 超时未加载 → 降级
+      }, TIMEOUT);
+      img.addEventListener("load", ()=>{ clearTimeout(t); img.classList.add("is-loaded"); }, { once:true });
+    }
+    function scan(root){ (root.querySelectorAll ? root.querySelectorAll("img.pm-img") : []).forEach(arm); }
+    const start = ()=>{
+      scan(document);
+      new MutationObserver(muts=>{
+        muts.forEach(m=> m.addedNodes && m.addedNodes.forEach(n=>{
+          if(n.nodeType!==1) return;
+          if(n.matches && n.matches("img.pm-img")) arm(n);
+          else scan(n);
+        }));
+      }).observe(document.body, { childList:true, subtree:true });
+    };
+    if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
+  })();
 
   /* ================= 用户数据同步：收藏 + 购物袋 =================
      登录用户 → 存 Supabase（跨设备）；游客 → 存浏览器本地；
@@ -254,6 +286,7 @@
       __cart = readLS(LS_KEY);
     }
     updateBadge(); updateFavBadge();
+    try{ document.dispatchEvent(new Event("hk:userdata")); }catch(e){}
   }
   // 幂等：同一次页面加载只真正拉取一次
   window.loadUserData = function(force){

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HYPE KIT · 全球时尚牛仔穿搭</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260828">
+<link rel="stylesheet" href="css/style.css?v=20260901">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -69,14 +69,15 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260828"></script>
-<script src="js/data.js?v=20260828"></script>
-<script src="js/shared.js?v=20260828"></script>
+<script src="js/config.js?v=20260901"></script>
+<script src="js/data.js?v=20260901"></script>
+<script src="js/shared.js?v=20260901"></script>
 <script>
 (async function(){
   await loadSiteData();
   mountChrome("home");
 
+  function paint(){
   // 文案（来自后台）
   document.getElementById("hero-kicker").innerHTML = SITE.hero_kicker;
   document.getElementById("hero-title").innerHTML = SITE.hero_title;
@@ -86,9 +87,9 @@
   document.getElementById("promo-text").textContent = SITE.promo_text;
 
   document.getElementById("promo-preview").innerHTML =
-    `<img src="https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=640&q=80"
-       alt="牛仔穿搭" loading="lazy"
-       onerror="this.onerror=null;this.src='https://picsum.photos/seed/denimpromo/640/760'"
+    `<img src="https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=520&q=70"
+       alt="牛仔穿搭" loading="lazy" decoding="async"
+       onerror="this.onerror=null;this.src='https://picsum.photos/seed/denimpromo/520/650'"
        style="width:100%;border-radius:10px;object-fit:cover;aspect-ratio:4/5">`;
 
   const feat = PRODUCTS.slice(0,4);
@@ -102,6 +103,9 @@
       <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
       <div class="price">¥${p.price}</div></a>`;
   }).join("");
+  }
+  paint();
+  document.addEventListener("hk:data", paint);
 })();
 </script>
 </body>

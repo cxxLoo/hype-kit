@@ -15,6 +15,20 @@ window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_AN
 // 上传图片用的 Storage 桶名（需在 Supabase 里创建，见部署教程）
 window.SB_BUCKET = "assets";
 
+/* ===== 预连接：提前和后端/图床握手，减少首屏等待 ===== */
+(function preconnect(){
+  const hosts = [window.SUPABASE_URL, "https://images.unsplash.com", "https://picsum.photos", "https://fastly.picsum.photos"];
+  const head = document.head || document.getElementsByTagName("head")[0];
+  hosts.forEach(h => {
+    if(!h) return;
+    ["preconnect","dns-prefetch"].forEach(rel => {
+      const l = document.createElement("link");
+      l.rel = rel; l.href = h; if(rel==="preconnect") l.crossOrigin = "";
+      head.appendChild(l);
+    });
+  });
+})();
+
 /* ===== 预留：生成式 AI 试穿接口（第二期）=====
  * 留空 = 使用前端合成试穿（默认，零成本）。
  * 接入真·AI 试穿时：部署一个 Supabase Edge Function 代理第三方 AI 模型（把 API Key 藏在函数里），

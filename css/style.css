@@ -105,7 +105,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .card .thumb{background:#f5f5f5;border-radius:var(--radius);overflow:hidden;aspect-ratio:1;
   display:flex;align-items:center;justify-content:center;position:relative}
 .card .thumb svg{width:82%;height:82%}
-.card .thumb img.pm-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.card .thumb img.pm-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s,opacity .4s;opacity:0}
+.card .thumb img.pm-img.is-loaded{opacity:1}
+.card .thumb img.pm-img.is-error{object-fit:contain;padding:14%;opacity:.5}
+/* 图片加载中的骨架微光，避免空白等待感 */
+.card .thumb::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(100deg,#eee 30%,#f6f6f6 50%,#eee 70%);background-size:200% 100%;
+  animation:hk-shimmer 1.2s linear infinite;opacity:1;transition:opacity .3s;z-index:0}
+.card .thumb:has(img.pm-img.is-loaded)::before,
+.card .thumb:has(svg)::before{opacity:0}
+.card .thumb img.pm-img,.card .thumb svg{position:relative;z-index:1}
+@keyframes hk-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .card:hover .thumb img.pm-img{transform:scale(1.05)}
 .card .tag{position:absolute;top:12px;left:12px;background:#fff;font-size:12px;font-weight:600;
   color:var(--sale);padding:4px 8px;border-radius:4px}

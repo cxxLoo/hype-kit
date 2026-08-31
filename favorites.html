@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>我的收藏 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260828">
+<link rel="stylesheet" href="css/style.css?v=20260901">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -30,12 +30,13 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260828"></script>
-<script src="js/data.js?v=20260828"></script>
-<script src="js/shared.js?v=20260828"></script>
+<script src="js/config.js?v=20260901"></script>
+<script src="js/data.js?v=20260901"></script>
+<script src="js/shared.js?v=20260901"></script>
 <script>
 (async function(){
   await loadSiteData();
+  await loadUserData();
   mountChrome();
 
   const $ = id=>document.getElementById(id);
@@ -129,6 +130,8 @@
   });
 
   renderProducts();
+  document.addEventListener("hk:data", renderProducts);
+  document.addEventListener("hk:userdata", ()=>{ renderProducts(); if($("pane-post").style.display!=="none") renderPosts(); });
   // 深链：?tab=post 直接进帖子页
   if(new URLSearchParams(location.search).get("tab")==="post"){
     document.querySelector('.ctab[data-tab="post"]').click();

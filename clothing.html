@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>服装商城 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260828">
+<link rel="stylesheet" href="css/style.css?v=20260901">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -74,15 +74,15 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260828"></script>
-<script src="js/data.js?v=20260828"></script>
-<script src="js/shared.js?v=20260828"></script>
+<script src="js/config.js?v=20260901"></script>
+<script src="js/data.js?v=20260901"></script>
+<script src="js/shared.js?v=20260901"></script>
 <script>
 (async function(){
   await loadSiteData();
   mountChrome("clothing");
 
-  const all = PRODUCTS.filter(p=>p.cat==="clothing");
+  let all = PRODUCTS.filter(p=>p.cat==="clothing");
   const qs = new URLSearchParams(location.search);
   let gender = ["men","women"].includes(qs.get("g")) ? qs.get("g") : "all";
   let kind   = ["jeans","top"].includes(qs.get("k")) ? qs.get("k") : "all";
@@ -115,6 +115,9 @@
   }
   syncChips();
   render();
+
+  // 后台数据刷新到达后自动重绘（配合首屏秒开的缓存策略）
+  document.addEventListener("hk:data", ()=>{ all = PRODUCTS.filter(p=>p.cat==="clothing"); render(); });
 
   document.getElementById("g-filter").addEventListener("click", e=>{
     const b = e.target.closest("[data-g]"); if(!b) return;
