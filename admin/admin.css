@@ -247,4 +247,13 @@ tbody tr:last-child td{border-bottom:none}
 .switch .track{position:absolute;inset:0;background:#cfd4de;border-radius:20px;transition:.18s}
 .switch .track:before{content:'';position:absolute;left:3px;top:3px;width:21px;height:21px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .switch input:checked + .track{background:var(--brand)}
+
+/* ---------- 优惠管理 ---------- */
+#coupon-list .cp-type,#coupon-list .cp-val,#coupon-list .cp-label{
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;background:#fff}
+#coupon-list .cp-type:focus,#coupon-list .cp-val:focus,#coupon-list .cp-label:focus{border-color:var(--brand)}
+#coupon-list .cp-final b{font-size:15px}
+.btn.ghost.sm.has-video{border-color:#16a34a;color:#16a34a}
+.bar .hint{font-size:12.5px;color:var(--muted);max-width:60%;text-align:right}
+
 .switch input:checked + .track:before{transform:translateX(21px)}

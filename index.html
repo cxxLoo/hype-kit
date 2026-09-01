@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HYPE KIT · 全球时尚牛仔穿搭</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260901">
+<link rel="stylesheet" href="css/style.css?v=20260902">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -69,9 +69,11 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260901"></script>
-<script src="js/data.js?v=20260901"></script>
-<script src="js/shared.js?v=20260901"></script>
+<script src="js/config.js?v=20260902"></script>
+<script src="js/data.js?v=20260902"></script>
+<script src="js/shared.js?v=20260902"></script>
+<script src="js/chat.js?v=20260902"></script>
+<script src="js/widget.js?v=20260902"></script>
 <script>
 (async function(){
   await loadSiteData();
@@ -99,9 +101,9 @@
                : p.cat==="clothing" ? "clothing.html"
                : (moduleEnabled("custom") ? "customize.html?id=" + p.id : "clothing.html");
     return `<a class="card" href="${href}">
-      <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}${media}</div>
+      <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}${promoBadge(p)}${media}</div>
       <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
-      <div class="price">¥${p.price}</div></a>`;
+      ${priceHTML(p)}</a>`;
   }).join("");
   }
   paint();

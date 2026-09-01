@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>管理后台 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="admin.css?v=20260901">
+<link rel="stylesheet" href="admin.css?v=20260902">
 </head>
 <body>
 <div class="layout">
@@ -23,6 +23,10 @@
       <div class="tab on" data-tab="products" data-crumb="商品管理">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 7.5 12 12l-8.4-4.5M12 12v9"/><path d="M12 3 3.6 7.5v9L12 21l8.4-4.5v-9L12 3z"/></svg>
         <span>商品管理</span>
+      </div>
+      <div class="tab" data-tab="coupons" data-crumb="优惠管理">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><path d="M9 9l6 6M9.5 9.5h.01M14.5 14.5h.01"/></svg>
+        <span>优惠管理</span>
       </div>
       <div class="tab" data-tab="content" data-crumb="文案管理">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
@@ -93,6 +97,28 @@
             <button class="btn brand" id="add-product">+ 新增商品</button>
           </div>
           <div id="product-list"><div class="loading">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- 优惠管理 -->
+      <section id="tab-coupons" style="display:none">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/></svg></div>
+            <div><div class="lbl">进行中的优惠</div><div class="num" id="cp-active">–</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 7.5 12 12l-8.4-4.5M12 12v9"/><path d="M12 3 3.6 7.5v9L12 21l8.4-4.5v-9L12 3z"/></svg></div>
+            <div><div class="lbl">商品总数</div><div class="num" id="cp-total">–</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="bar">
+            <h2>商品优惠设置</h2>
+            <span class="hint">按折扣 % 或按金额 ¥ 设置优惠；开启后前台展示划线原价 + 优惠价 + 促销角标。</span>
+          </div>
+          <div id="coupon-list"><div class="loading">加载中…</div></div>
         </div>
       </section>
 
@@ -413,10 +439,32 @@
   </div>
 </div>
 
+<!-- 真人试穿视频弹窗 -->
+<div class="mask" id="video-mask">
+  <div class="modal">
+    <h3 id="video-title">真人试穿视频</h3>
+    <div class="modal-preview" id="video-preview"></div>
+    <div class="fld">
+      <label>视频链接（可直接粘贴，或用下方上传）</label>
+      <input id="video-url" placeholder="https://… .mp4">
+    </div>
+    <div class="fld">
+      <label>上传视频文件</label>
+      <input id="video-file" type="file" accept="video/*">
+      <div class="hint" id="video-hint">前台点击该商品图片即可弹出视频。留空则展示商品图片。</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="video-clear">清除视频</button>
+      <button class="btn ghost" id="video-cancel">取消</button>
+      <button class="btn brand" id="video-save">保存</button>
+    </div>
+  </div>
+</div>
+
 <script src="../js/vendor/supabase.js"></script>
-<script src="../js/config.js?v=20260901"></script>
-<script src="../js/data.js?v=20260901"></script>
-<script src="../js/shared.js?v=20260901"></script>
-<script src="admin.js?v=20260901"></script>
+<script src="../js/config.js?v=20260902"></script>
+<script src="../js/data.js?v=20260902"></script>
+<script src="../js/shared.js?v=20260902"></script>
+<script src="admin.js?v=20260902"></script>
 </body>
 </html>

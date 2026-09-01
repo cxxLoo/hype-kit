@@ -15,6 +15,15 @@ window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_AN
 // 上传图片用的 Storage 桶名（需在 Supabase 里创建，见部署教程）
 window.SB_BUCKET = "assets";
 
+/* ===== 老年版（大字号）模式：尽早给 <html> 打标记，避免刷新闪烁 ===== */
+(function applySeniorEarly(){
+  try{
+    if(localStorage.getItem("hk_senior") === "1"){
+      document.documentElement.classList.add("senior");
+    }
+  }catch(e){}
+})();
+
 /* ===== 预连接：提前和后端/图床握手，减少首屏等待 ===== */
 (function preconnect(){
   const hosts = [window.SUPABASE_URL, "https://images.unsplash.com", "https://picsum.photos", "https://fastly.picsum.photos"];

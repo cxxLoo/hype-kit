@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>鞋帽商城 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260901">
+<link rel="stylesheet" href="css/style.css?v=20260902">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -67,9 +67,11 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260901"></script>
-<script src="js/data.js?v=20260901"></script>
-<script src="js/shared.js?v=20260901"></script>
+<script src="js/config.js?v=20260902"></script>
+<script src="js/data.js?v=20260902"></script>
+<script src="js/shared.js?v=20260902"></script>
+<script src="js/chat.js?v=20260902"></script>
+<script src="js/widget.js?v=20260902"></script>
 <script>
 (async function(){
   await loadSiteData();
@@ -83,11 +85,13 @@
 
   function card(p){
     return `<div class="card" data-id="${p.id}">
-      <div class="thumb">${p.tag?`<span class="tag">${p.tag}</span>`:""}
+      <div class="thumb playable" data-media="${p.id}">${p.tag?`<span class="tag">${p.tag}</span>`:""}
+        ${promoBadge(p)}
         <button class="fav-btn ${Favs.has('product',p.id)?'on':''}" data-fav="${p.id}" title="收藏">${heartSvg}</button>
+        <span class="play-hint"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
         ${productMedia(p)}</div>
       <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
-      <div class="price">¥${p.price}</div>
+      ${priceHTML(p)}
       <div class="card-cta">
         <button class="btn cart-add" data-add="${p.id}">加入购物袋</button>
         <button class="btn buy-now" data-buy="${p.id}">立即购买</button>
@@ -134,13 +138,21 @@
     const b = e.target.closest("[data-add]");
     if(b){
       const p = PRODUCTS.find(x=>x.id===b.dataset.add); if(!p) return;
-      Cart.add({sku:p.id, title:p.name, price:p.price, size:"均码", svg:productMedia(p), meta:p.desc});
+      Cart.add({sku:p.id, title:p.name, price:priceInfo(p).final, size:"均码", svg:productMedia(p), meta:p.desc});
       toast("已加入购物袋："+p.name);
       return;
     }
-    const buy = e.target.closest("[data-buy]"); if(!buy) return;
-    const bp = PRODUCTS.find(x=>x.id===buy.dataset.buy); if(!bp) return;
-    BuyNow.go({sku:bp.id, title:bp.name, price:bp.price, qty:1, size:"均码", svg:productMedia(bp), meta:bp.desc});
+    const buy = e.target.closest("[data-buy]");
+    if(buy){
+      const bp = PRODUCTS.find(x=>x.id===buy.dataset.buy); if(!bp) return;
+      BuyNow.go({sku:bp.id, title:bp.name, price:priceInfo(bp).final, qty:1, size:"均码", svg:productMedia(bp), meta:bp.desc});
+      return;
+    }
+    const media = e.target.closest("[data-media]");
+    if(media){
+      const mp = PRODUCTS.find(x=>x.id===media.dataset.media); if(!mp) return;
+      openProductModal(mp);
+    }
   });
 })();
 </script>

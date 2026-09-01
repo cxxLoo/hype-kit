@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>购物袋 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260901">
+<link rel="stylesheet" href="css/style.css?v=20260902">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -41,9 +41,11 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260901"></script>
-<script src="js/data.js?v=20260901"></script>
-<script src="js/shared.js?v=20260901"></script>
+<script src="js/config.js?v=20260902"></script>
+<script src="js/data.js?v=20260902"></script>
+<script src="js/shared.js?v=20260902"></script>
+<script src="js/chat.js?v=20260902"></script>
+<script src="js/widget.js?v=20260902"></script>
 <script>
 (async function(){
 loadContent();
@@ -242,7 +244,7 @@ $("checkout-form").addEventListener("submit", async (e)=>{
   $("co-err").textContent = "";
   try{
     const total = orderTotal(), ship = shipOf(total);
-    const items = list.map(it=>({ title:it.title, price:it.price, qty:it.qty, size:it.size||"", meta:it.meta||"", svg:it.svg||"" }));
+    const items = list.map(it=>({ sku:it.sku||"", title:it.title, price:it.price, qty:it.qty, size:it.size||"", meta:it.meta||"", svg:it.svg||"" }));
     const { data, error } = await sb.rpc("place_order", {
       p_name:name, p_phone:phone, p_address:address,
       p_remark:$("co-remark").value, p_items:items, p_total:total, p_ship_fee:ship

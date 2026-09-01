@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>我的订单 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260901">
+<link rel="stylesheet" href="css/style.css?v=20260902">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -17,6 +17,27 @@
     <div id="orders-body"><div class="empty"><p>加载中…</p></div></div>
   </div>
 </section>
+
+<!-- 商品评价弹窗 -->
+<div class="modal-mask" id="rv-mask">
+  <form class="modal-box" id="rv-form">
+    <h3>评价商品</h3>
+    <div class="rv-item-line" id="rv-item"></div>
+    <div class="mfield">
+      <label>评分</label>
+      <div class="rv-stars-input" id="rv-stars">
+        <span class="s" data-v="1">★</span><span class="s" data-v="2">★</span><span class="s" data-v="3">★</span><span class="s" data-v="4">★</span><span class="s" data-v="5">★</span>
+      </div>
+    </div>
+    <div class="mfield"><label>评价内容</label><textarea id="rv-content" maxlength="300" placeholder="说说这件商品的穿着感受、尺码、质量吧～"></textarea></div>
+    <div class="mfield"><label>昵称（选填）</label><input id="rv-author" maxlength="20" placeholder="匿名买家"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" style="border:1px solid #e5e5e5" id="rv-cancel">取消</button>
+      <button type="submit" class="btn dark" id="rv-submit">提交评价</button>
+    </div>
+    <div class="co-err" id="rv-err"></div>
+  </form>
+</div>
 
 <div id="footer-slot"></div>
 
@@ -33,9 +54,11 @@
 </div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260901"></script>
-<script src="js/data.js?v=20260901"></script>
-<script src="js/shared.js?v=20260901"></script>
+<script src="js/config.js?v=20260902"></script>
+<script src="js/data.js?v=20260902"></script>
+<script src="js/shared.js?v=20260902"></script>
+<script src="js/chat.js?v=20260902"></script>
+<script src="js/widget.js?v=20260902"></script>
 <script>
 (async function(){
 await loadContent();
@@ -44,6 +67,9 @@ mountChrome("orders");
 
 const root = document.getElementById("orders-body");
 const newNo = new URLSearchParams(location.search).get("new");
+const reviewedKeys = new Set();   // `${token}::${sku}` 已评价
+let allOrders = [];
+const reviewable = (st)=> st!=="pending_payment" && st!=="cancelled";
 
 function stepIndex(status){ return ORDER_FLOW.indexOf(status); } // -1 表示已取消
 
@@ -78,13 +104,23 @@ function actions(o){
 }
 
 function orderCard(o){
-  const items = (o.items||[]).map(it=>`
+  const canReview = reviewable(o.status);
+  const items = (o.items||[]).map((it,idx)=>{
+    let rvBtn = "";
+    if(canReview && it.sku){
+      const done = reviewedKeys.has(o.token + "::" + it.sku);
+      rvBtn = done
+        ? `<button class="btn review done" disabled>已评价</button>`
+        : `<button class="btn review" data-rv="${idx}" data-t="${o.token}">评价</button>`;
+    }
+    return `
     <div class="ord-item">
       <div class="oi-thumb">${it.svg||""}</div>
       <div class="oi-info"><h4>${escapeHtml(it.title||"")}</h4>
         <div class="m">${escapeHtml(it.meta||"")} ${it.size?("· 尺码 "+escapeHtml(it.size)):""}</div></div>
-      <div class="oi-right">¥${it.price} × ${it.qty}</div>
-    </div>`).join("");
+      <div class="oi-right">¥${it.price} × ${it.qty}${rvBtn?`<div style="margin-top:8px">${rvBtn}</div>`:""}</div>
+    </div>`;
+  }).join("");
   const ship = o.ship_fee ? ("¥"+o.ship_fee) : "免运费";
   const track = o.status==="shipped"||o.status==="completed"
     ? `<div class="ord-track">物流单号：<b>${escapeHtml(o.tracking_no||"—")}</b></div>` : "";
@@ -125,11 +161,23 @@ async function load(){
   }
 
   const list = Object.values(map).sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+  allOrders = list;
   if(!list.length){
     root.innerHTML = `<div class="empty"><h3>还没有订单</h3><p style="margin-bottom:22px">先去挑一条心仪的牛仔裤吧。</p>
       <a class="btn dark" href="clothing.html">去逛逛</a></div>`;
     return;
   }
+
+  // 载入这些订单已提交过的评价，标记「已评价」
+  reviewedKeys.clear();
+  try{
+    const otokens = list.map(o=>o.token).filter(Boolean);
+    if(otokens.length){
+      const { data } = await sb.from("reviews").select("order_token,product_id").in("order_token", otokens);
+      (data||[]).forEach(r=> reviewedKeys.add(r.order_token + "::" + r.product_id));
+    }
+  }catch(e){}
+
   root.innerHTML = list.map(orderCard).join("");
 
   root.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click", async ()=>{
@@ -142,7 +190,61 @@ async function load(){
     toast(act==="pay"?"支付成功":act==="confirm"?"已确认收货":"订单已取消");
     load();
   }));
+
+  root.querySelectorAll("[data-rv]").forEach(b=>b.addEventListener("click", ()=>{
+    const o = allOrders.find(x=>x.token===b.dataset.t); if(!o) return;
+    const it = (o.items||[])[+b.dataset.rv]; if(!it) return;
+    openReview(o.token, it);
+  }));
 }
+
+/* ---------- 商品评价 ---------- */
+let rvCtx = null;   // { token, item }
+let rvRating = 5;
+function setRvStars(n){
+  rvRating = Math.max(1, Math.min(5, n));
+  document.querySelectorAll("#rv-stars .s").forEach(s=> s.classList.toggle("on", +s.dataset.v <= rvRating));
+}
+document.querySelectorAll("#rv-stars .s").forEach(s=> s.addEventListener("click", ()=> setRvStars(+s.dataset.v)));
+
+function openReview(token, item){
+  rvCtx = { token, item };
+  setRvStars(5);
+  document.getElementById("rv-content").value = "";
+  document.getElementById("rv-author").value = "";
+  document.getElementById("rv-err").textContent = "";
+  document.getElementById("rv-item").innerHTML =
+    `<div class="rv-item-thumb">${item.svg||""}</div><div><h4>${escapeHtml(item.title||"")}</h4>
+     <div class="m" style="color:#888;font-size:13px">${item.size?("尺码 "+escapeHtml(item.size)):""}</div></div>`;
+  document.getElementById("rv-mask").classList.add("show");
+}
+document.getElementById("rv-cancel").addEventListener("click", ()=> document.getElementById("rv-mask").classList.remove("show"));
+document.getElementById("rv-mask").addEventListener("click", e=>{ if(e.target.id==="rv-mask") document.getElementById("rv-mask").classList.remove("show"); });
+document.getElementById("rv-form").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  if(!rvCtx) return;
+  const content = document.getElementById("rv-content").value.trim();
+  if(!content){ document.getElementById("rv-err").textContent = "请填写评价内容～"; return; }
+  const btn = document.getElementById("rv-submit"); btn.disabled = true; btn.textContent = "提交中…";
+  try{
+    const { error } = await sb.rpc("add_review", {
+      p_token: rvCtx.token,
+      p_product_id: rvCtx.item.sku,
+      p_rating: rvRating,
+      p_content: content,
+      p_author: document.getElementById("rv-author").value.trim()
+    });
+    if(error) throw error;
+    reviewedKeys.add(rvCtx.token + "::" + rvCtx.item.sku);
+    document.getElementById("rv-mask").classList.remove("show");
+    toast("评价成功，感谢您的分享！");
+    load();
+  }catch(err){
+    document.getElementById("rv-err").textContent = "提交失败：" + (err.message || err);
+  }finally{
+    btn.disabled = false; btn.textContent = "提交评价";
+  }
+});
 
 /* ---------- 扫码支付 ---------- */
 function openQR(token){

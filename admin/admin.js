@@ -37,13 +37,14 @@
   }
 
   /* ---------- 标签页切换 ---------- */
-  const SECTIONS = { products:"tab-products", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts", payment:"tab-payment", modules:"tab-modules" };
+  const SECTIONS = { products:"tab-products", coupons:"tab-coupons", content:"tab-content", orders:"tab-orders", feedback:"tab-feedback", faqs:"tab-faqs", accounts:"tab-accounts", payment:"tab-payment", modules:"tab-modules" };
   document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
     t.classList.add("on");
     const k = t.dataset.tab;
     $("crumb").textContent = t.dataset.crumb || "";
     Object.keys(SECTIONS).forEach(key=>{ $(SECTIONS[key]).style.display = key===k ? "" : "none"; });
+    if(k==="coupons") loadCoupons();
     if(k==="orders") loadOrders();
     if(k==="feedback") loadFeedback();
     if(k==="faqs") loadFaqs();
@@ -73,6 +74,7 @@
       <th>商品</th><th>ID</th><th>分类</th><th>价格</th><th>标签</th><th>操作</th>
     </tr></thead><tbody>${list.map(rowHtml).join("")}</tbody></table>`;
     box.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEdit(list.find(x=>x.id===b.dataset.edit))));
+    box.querySelectorAll("[data-video]").forEach(b=>b.addEventListener("click",()=>openVideo(list.find(x=>x.id===b.dataset.video))));
     box.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>delProduct(b.dataset.del)));
   }
 
@@ -86,6 +88,7 @@
     const p = { cat:r.cat, name:r.name, opts:r.opts||{}, image_url:r.image_url||"" };
     const catPill = CAT_PILL[r.cat] || `<span class="pill cat">${escapeHtml(r.cat||"")}</span>`;
     const tagPill = r.tag ? `<span class="pill tag">${escapeHtml(r.tag)}</span>` : `<span style="color:#c3c8d2">—</span>`;
+    const hasVideo = r.opts && r.opts.video;
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:12px">
         <div class="thumb">${productMedia(p)}</div>
@@ -96,6 +99,7 @@
       <td><span class="price">¥${r.price}</span></td>
       <td>${tagPill}</td>
       <td><div class="row-actions">
+        <button class="btn ghost sm ${hasVideo?"has-video":""}" data-video="${escapeHtml(r.id)}">${hasVideo?"视频✓":"视频"}</button>
         <button class="btn ghost sm" data-edit="${escapeHtml(r.id)}">编辑</button>
         <button class="btn danger sm" data-del="${escapeHtml(r.id)}">删除</button>
       </div></td>
@@ -235,6 +239,155 @@
   $("modal-cancel").addEventListener("click", ()=>showMask(false));
   $("mask").addEventListener("click",(e)=>{ if(e.target.id==="mask") showMask(false); });
   function showMask(on){ $("mask").classList.toggle("show", on); }
+
+  /* ================= 商品视频（真人试穿） ================= */
+  let videoEditingId = null;
+
+  function renderVideoPreview(){
+    const u = $("video-url").value.trim();
+    $("video-preview").innerHTML = u
+      ? `<video src="${escapeHtml(u)}" controls style="width:100%;max-height:260px;border-radius:10px;background:#000"></video>`
+      : `<div style="padding:40px;text-align:center;color:#8a93a6">暂无视频，添加后前台点击商品图即可播放</div>`;
+  }
+  function openVideo(r){
+    if(!r) return;
+    videoEditingId = r.id;
+    $("video-title").textContent = "真人试穿视频：" + r.id;
+    $("video-url").value = (r.opts && r.opts.video) || "";
+    $("video-file").value = "";
+    $("video-hint").textContent = "前台点击该商品图片即可弹出视频。留空则展示商品图片。";
+    renderVideoPreview();
+    $("video-mask").classList.add("show");
+  }
+  $("video-url").addEventListener("input", renderVideoPreview);
+  $("video-clear").addEventListener("click", ()=>{ $("video-url").value = ""; renderVideoPreview(); });
+  $("video-cancel").addEventListener("click", ()=> $("video-mask").classList.remove("show"));
+  $("video-mask").addEventListener("click", e=>{ if(e.target.id==="video-mask") $("video-mask").classList.remove("show"); });
+
+  $("video-file").addEventListener("change", async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(!/^video\//.test(file.type)){ toast("请选择视频文件"); return; }
+    $("video-hint").textContent = "上传中…（视频较大，请稍候）";
+    try{
+      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const path = `videos/${videoEditingId || Date.now()}-${Date.now()}.${ext}`;
+      const { error } = await sb.storage.from(SB_BUCKET).upload(path, file, { upsert:true, cacheControl:"3600" });
+      if(error) throw error;
+      const { data } = sb.storage.from(SB_BUCKET).getPublicUrl(path);
+      $("video-url").value = data.publicUrl;
+      renderVideoPreview();
+      $("video-hint").textContent = "已上传，点「保存」即生效。";
+    }catch(err){ $("video-hint").textContent = "上传失败：" + err.message; }
+  });
+
+  $("video-save").addEventListener("click", async ()=>{
+    if(!videoEditingId) return;
+    const btn = $("video-save"); btn.disabled = true; btn.textContent = "保存中…";
+    try{
+      const { data, error:e1 } = await sb.from("products").select("opts").eq("id", videoEditingId).single();
+      if(e1) throw e1;
+      const opts = Object.assign({}, data && data.opts);
+      const url = $("video-url").value.trim();
+      if(url) opts.video = url; else delete opts.video;
+      const { error } = await sb.from("products").update({ opts }).eq("id", videoEditingId);
+      if(error) throw error;
+      toast("视频已保存，前台刷新即可生效");
+      $("video-mask").classList.remove("show");
+      loadProductList();
+    }catch(err){ toast("保存失败：" + err.message); }
+    finally{ btn.disabled = false; btn.textContent = "保存"; }
+  });
+
+  /* ================= 优惠管理 ================= */
+  let couponProducts = [];
+
+  function couponFinal(price, type, value){
+    price = Number(price) || 0; value = Number(value) || 0;
+    let final = type === "amount" ? price - value : Math.round(price * (100 - value) / 100);
+    return Math.max(0, final);
+  }
+  function updateCouponPreview(tr){
+    const price = Number(tr.dataset.price) || 0;
+    const type = tr.querySelector(".cp-type").value;
+    const value = parseInt(tr.querySelector(".cp-val").value, 10) || 0;
+    const on = tr.querySelector(".cp-on").checked;
+    const cell = tr.querySelector(".cp-final");
+    if(on && value > 0){
+      const f = couponFinal(price, type, value);
+      cell.innerHTML = f < price ? `<b style="color:#e0342b">¥${f}</b>` : `<span style="color:#8a93a6">无效</span>`;
+    }else{
+      cell.innerHTML = `<span style="color:#c3c8d2">—</span>`;
+    }
+  }
+
+  function couponRow(r){
+    const p = { cat:r.cat, name:r.name, opts:r.opts||{}, image_url:r.image_url||"" };
+    const d = (r.opts && r.opts.discount) || {};
+    const type = d.type === "amount" ? "amount" : "percent";
+    const val = d.value != null ? d.value : "";
+    const label = d.label || "";
+    const on = !!d.on;
+    return `<tr data-cp="${escapeHtml(r.id)}" data-price="${r.price}">
+      <td><div style="display:flex;align-items:center;gap:12px">
+        <div class="thumb">${productMedia(p)}</div>
+        <span class="pname">${escapeHtml(r.name||"")}</span>
+      </div></td>
+      <td><span class="price">¥${r.price}</span></td>
+      <td><select class="cp-type">
+        <option value="percent" ${type==="percent"?"selected":""}>按折扣 %</option>
+        <option value="amount" ${type==="amount"?"selected":""}>按金额 ¥</option>
+      </select></td>
+      <td><input class="cp-val" type="number" min="0" value="${val}" style="width:88px" placeholder="0"></td>
+      <td><input class="cp-label" value="${escapeHtml(label)}" placeholder="如 限时8折" style="width:130px"></td>
+      <td class="cp-final"><span style="color:#c3c8d2">—</span></td>
+      <td><label class="switch"><input type="checkbox" class="cp-on" ${on?"checked":""}><span class="track"></span></label></td>
+      <td><button class="btn brand sm cp-save">保存</button></td>
+    </tr>`;
+  }
+
+  async function loadCoupons(){
+    const box = $("coupon-list");
+    const { data, error } = await sb.from("products").select("*").order("sort",{ascending:true});
+    if(error){ box.innerHTML = `<div class="err">加载失败：${error.message}</div>`; return; }
+    couponProducts = data || [];
+    $("cp-total").textContent  = couponProducts.length;
+    $("cp-active").textContent = couponProducts.filter(p=>p.opts && p.opts.discount && p.opts.discount.on).length;
+    if(!couponProducts.length){ box.innerHTML = `<div class="empty-state">还没有商品，先到「商品管理」新增。</div>`; return; }
+    box.innerHTML = `<table><thead><tr>
+      <th>商品</th><th>原价</th><th>优惠方式</th><th>优惠值</th><th>促销文案</th><th>优惠价</th><th>启用</th><th>操作</th>
+    </tr></thead><tbody>${couponProducts.map(couponRow).join("")}</tbody></table>`;
+    box.querySelectorAll("tr[data-cp]").forEach(tr=>{
+      updateCouponPreview(tr);
+      tr.querySelector(".cp-type").addEventListener("change", ()=>updateCouponPreview(tr));
+      tr.querySelector(".cp-val").addEventListener("input", ()=>updateCouponPreview(tr));
+      tr.querySelector(".cp-on").addEventListener("change", ()=>updateCouponPreview(tr));
+      tr.querySelector(".cp-save").addEventListener("click", ()=>saveCoupon(tr));
+    });
+  }
+
+  async function saveCoupon(tr){
+    const id = tr.dataset.cp;
+    const type = tr.querySelector(".cp-type").value;
+    const value = parseInt(tr.querySelector(".cp-val").value, 10) || 0;
+    const label = tr.querySelector(".cp-label").value.trim();
+    const on = tr.querySelector(".cp-on").checked;
+    if(on){
+      if(value <= 0){ toast("请填写大于 0 的优惠值"); return; }
+      if(type === "percent" && value >= 100){ toast("折扣百分比应在 1–99 之间"); return; }
+    }
+    const btn = tr.querySelector(".cp-save"); btn.disabled = true; btn.textContent = "保存中…";
+    try{
+      const { data, error:e1 } = await sb.from("products").select("opts").eq("id", id).single();
+      if(e1) throw e1;
+      const opts = Object.assign({}, data && data.opts);
+      if(on && value > 0) opts.discount = { on:true, type, value, label };
+      else delete opts.discount;
+      const { error } = await sb.from("products").update({ opts }).eq("id", id);
+      if(error) throw error;
+      toast("优惠已保存，前台刷新即可生效");
+      loadCoupons();
+    }catch(err){ toast("保存失败：" + err.message); btn.disabled = false; btn.textContent = "保存"; }
+  }
 
   /* ================= 文案管理 ================= */
   const CONTENT_LABELS = {

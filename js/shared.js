@@ -74,6 +74,135 @@
   function escapeHtml(s){return String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));}
   window.escapeHtml = escapeHtml;
 
+  /* ================= 优惠 / 折扣 =================
+     折扣数据存于 product.opts.discount = { on, type:"percent"|"amount", value, label } */
+  function discountLabel(d, off){
+    if(d && d.label) return d.label;
+    if(!d) return "";
+    if(d.type === "amount") return "立减¥" + (Number(d.value)||0);
+    const zhe = (100 - (Number(d.value)||0)) / 10;      // 20% off → 8 折
+    const z = Number.isInteger(zhe) ? zhe : Math.round(zhe*10)/10;
+    return z > 0 && z < 10 ? (z + "折") : ("省¥" + off);
+  }
+  window.priceInfo = function(p){
+    const original = Math.max(0, Number(p && p.price) || 0);
+    const d = p && p.opts && p.opts.discount;
+    let final = original, hasDiscount = false, label = "";
+    if(d && d.on && Number(d.value) > 0){
+      if(d.type === "amount") final = original - Number(d.value);
+      else final = Math.round(original * (100 - Number(d.value)) / 100);
+      final = Math.max(0, final);
+      if(final < original){ hasDiscount = true; }
+      else final = original;
+    }
+    const off = original - final;
+    if(hasDiscount) label = discountLabel(d, off);
+    return { hasDiscount, final, original, off, label };
+  };
+  /* 价格区块：有优惠 → 原价划线 + 优惠价 */
+  window.priceHTML = function(p){
+    const i = window.priceInfo(p);
+    if(i.hasDiscount){
+      return `<div class="price has-sale"><span class="now">¥${i.final}</span><span class="was">¥${i.original}</span></div>`;
+    }
+    return `<div class="price">¥${i.original}</div>`;
+  };
+  /* 促销浮标：有优惠时展示，突出促销 */
+  window.promoBadge = function(p){
+    const i = window.priceInfo(p);
+    if(!i.hasDiscount) return "";
+    return `<span class="promo-badge">🔥 ${escapeHtml(i.label)}</span>`;
+  };
+  /* 商品是否有视频 */
+  window.productVideo = function(p){ return (p && p.opts && p.opts.video) ? String(p.opts.video) : ""; };
+
+  /* ================= 商品视频 + 买家评论 弹窗 ================= */
+  function ensureProductModal(){
+    let mask = document.getElementById("pm-modal");
+    if(mask) return mask;
+    mask = document.createElement("div");
+    mask.className = "pm-modal-mask";
+    mask.id = "pm-modal";
+    mask.innerHTML = `
+      <div class="pm-modal-box" role="dialog" aria-modal="true">
+        <button class="pm-close" id="pm-close" aria-label="关闭">&times;</button>
+        <div class="pm-media" id="pm-media"></div>
+        <div class="pm-info">
+          <h3 id="pm-name"></h3>
+          <div class="pm-price" id="pm-price"></div>
+          <div class="pm-reviews">
+            <div class="pm-reviews-head">买家评论 <span id="pm-rv-count">(0)</span></div>
+            <div class="pm-reviews-list" id="pm-rv-list"></div>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(mask);
+    const close = ()=> mask.classList.remove("show");
+    mask.querySelector("#pm-close").addEventListener("click", close);
+    mask.addEventListener("click", e=>{ if(e.target === mask) close(); });
+    document.addEventListener("keydown", e=>{ if(e.key === "Escape") close(); });
+    return mask;
+  }
+
+  function starRow(n){
+    n = Math.max(0, Math.min(5, Math.round(Number(n)||0)));
+    let s = "";
+    for(let i=0;i<5;i++) s += `<span class="pm-star ${i<n?"on":""}">★</span>`;
+    return `<span class="pm-stars">${s}</span>`;
+  }
+
+  /* 读取某商品的买家评论；表不存在或失败 → 返回空数组（不报错） */
+  window.loadProductReviews = async function(productId){
+    try{
+      if(!window.sb || !productId) return [];
+      const { data, error } = await sb.from("reviews")
+        .select("author,rating,content,created_at")
+        .eq("product_id", String(productId))
+        .order("created_at", { ascending:false }).limit(50);
+      if(error) throw error;
+      return data || [];
+    }catch(e){ return []; }
+  };
+
+  window.openProductModal = async function(p){
+    if(!p) return;
+    const mask = ensureProductModal();
+    const media = mask.querySelector("#pm-media");
+    const video = window.productVideo(p);
+    if(video){
+      media.innerHTML = `<video src="${escapeHtml(video)}" controls playsinline preload="metadata" poster="${escapeHtml(p.image_url||"")}"></video>`;
+    }else{
+      media.innerHTML = `<div class="pm-media-img">${window.productMedia(p)}</div>
+        <div class="pm-novideo">该商品暂未上传试穿视频</div>`;
+    }
+    mask.querySelector("#pm-name").textContent = p.name || "";
+    mask.querySelector("#pm-price").innerHTML = window.priceHTML(p);
+    const list = mask.querySelector("#pm-rv-list");
+    const count = mask.querySelector("#pm-rv-count");
+    list.innerHTML = `<div class="pm-rv-empty">评论加载中…</div>`;
+    count.textContent = "(0)";
+    mask.classList.add("show");
+
+    const reviews = await window.loadProductReviews(p.id);
+    // 弹窗可能已被切换到别的商品，做一次校验
+    if(!mask.classList.contains("show")) return;
+    count.textContent = "(" + reviews.length + ")";
+    if(!reviews.length){
+      list.innerHTML = `<div class="pm-rv-empty">还没有买家评论，快来做第一个评价的人吧～</div>`;
+      return;
+    }
+    list.innerHTML = reviews.map(r=>`
+      <div class="pm-rv-item">
+        <div class="pm-rv-top">
+          <span class="pm-rv-author">${escapeHtml(r.author || "匿名买家")}</span>
+          ${starRow(r.rating)}
+        </div>
+        <div class="pm-rv-content">${escapeHtml(r.content || "").replace(/\n/g,"<br>")}</div>
+        <div class="pm-rv-time">${r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}</div>
+      </div>`).join("");
+  };
+  window.starRowHTML = starRow;
+
   /* 牛仔穿搭（上衣 + 牛仔裤）：版型/水洗色/上衣色/做旧/绣字可定制 */
   window.denimSVG = function(o){
     o = o || {};
@@ -432,6 +561,37 @@
   };
   const moduleEnabled = window.moduleEnabled;
 
+  /* ---------- 老年版（大字号）开关 ---------- */
+  window.isSenior = function(){ try{ return localStorage.getItem("hk_senior") === "1"; }catch(e){ return false; } };
+  window.setSenior = function(on){
+    try{ localStorage.setItem("hk_senior", on ? "1" : "0"); }catch(e){}
+    document.documentElement.classList.toggle("senior", !!on);
+    syncSeniorLabel();
+  };
+  function syncSeniorLabel(){
+    const on = window.isSenior();
+    document.querySelectorAll("#senior-toggle").forEach(btn=>{
+      btn.classList.toggle("on", on);
+      const lb = btn.querySelector(".st-label");
+      if(lb) lb.textContent = on ? "标准版" : "老年版";
+      btn.title = on ? "切换回标准版" : "切换到老年版（大字号）";
+    });
+  }
+  function setupSeniorToggle(){
+    const on = window.isSenior();
+    document.documentElement.classList.toggle("senior", on);
+    syncSeniorLabel();
+    const btn = document.getElementById("senior-toggle");
+    if(btn && !btn.dataset.bound){
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", ()=>{
+        const next = !window.isSenior();
+        window.setSenior(next);
+        if(window.toast) window.toast(next ? "已切换到老年版（大字号）" : "已切换回标准版");
+      });
+    }
+  }
+
   window.mountChrome = function(active){
     window.__activeNav = active;
     const C = window.SITE || window.DEFAULT_CONTENT || {};
@@ -463,10 +623,15 @@
           <div class="acct" id="acct">
             <a class="nav-account" href="account.html">登录 / 注册</a>
           </div>
+          <button type="button" class="senior-toggle" id="senior-toggle" title="老年版 / 标准版切换">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7V4h16v3M9 20h6M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="st-label"></span>
+          </button>
         </div>
       </div></div></div>`;
       const cur = nav.querySelector(`.menu a[data-k="${active}"]`);
       if(cur) cur.classList.add("active");
+      setupSeniorToggle();
     }
     const foot = document.getElementById("footer-slot");
     if(foot){
