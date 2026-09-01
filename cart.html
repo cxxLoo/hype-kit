@@ -21,6 +21,7 @@
 <div class="modal-mask" id="checkout-mask">
   <form class="modal-box" id="checkout-form">
     <h3>填写收货信息</h3>
+    <div id="co-qty" class="co-qty" style="display:none"></div>
     <div id="co-saved" class="co-saved" style="display:none"></div>
     <div id="co-manual">
       <div class="mfield"><label>收货人 *</label><input id="co-name" maxlength="20" placeholder="请输入姓名"></div>
@@ -185,7 +186,34 @@ function refreshSummary(){
      <div class="sum-row"><span>配送费</span><span>${ship?"¥"+ship:"免运费"}</span></div>
      <div class="sum-row total"><span>应付合计</span><span>¥${total+ship}</span></div>`;
 }
+/* 结算弹窗内的商品数量选择（仅立即购买模式显示） */
+function renderCoQty(){
+  const box = $("co-qty");
+  if(!buynow){ box.style.display = "none"; box.innerHTML = ""; return; }
+  box.style.display = "";
+  box.innerHTML = `
+    <div class="co-item">
+      <div class="co-item-thumb">${buynow.svg||""}</div>
+      <div class="co-item-info">
+        <h4>${escapeHtml(buynow.title)}</h4>
+        <div class="co-item-m">¥${buynow.price}${buynow.size?(" · 尺码 "+escapeHtml(buynow.size)):""}</div>
+      </div>
+      <div class="co-item-right">
+        <div class="qty" id="co-qty-ctl"><button type="button" data-op="-">−</button><span>${buynow.qty}</span><button type="button" data-op="+">+</button></div>
+        <div class="co-item-sub">¥${buynow.price*buynow.qty}</div>
+      </div>
+    </div>`;
+  $("co-qty-ctl").addEventListener("click", e=>{
+    const op = e.target.dataset.op; if(!op) return;
+    buynow.qty = Math.max(1, buynow.qty + (op==="+"?1:-1));
+    BuyNow.set(buynow);
+    renderCoQty();     // 更新弹窗内数量与小计
+    refreshSummary();  // 更新弹窗内应付合计
+    renderBuyNow();    // 同步底层确认页
+  });
+}
 async function openCheckout(){
+  renderCoQty();
   refreshSummary();
   $("co-err").textContent = "";
   await loadCoAddrs();
