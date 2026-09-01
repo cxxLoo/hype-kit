@@ -647,4 +647,14 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
 .qr-note{color:#555;font-size:13px;margin-top:14px;line-height:1.6}
 .qr-none{color:var(--gray);font-size:14px;padding:26px 6px;line-height:1.6}
 
+/* ---------- 商品卡片：加入购物袋 + 立即购买 ---------- */
+.card-cta{display:flex;gap:8px;margin-top:12px}
+.card-cta .btn{flex:1;padding:11px 8px;font-size:13px;justify-content:center;white-space:nowrap}
+.btn.cart-add{border:1px solid #111;background:#fff;color:#111}
+.btn.cart-add:hover{background:#f4f4f4}
+.btn.buy-now{background:#ff5000;color:#fff;border:1px solid #ff5000}
+.btn.buy-now:hover{background:#e84800}
+.buynow-tip{background:#fff6ef;color:#c2410c;border:1px solid #ffe0c7;border-radius:10px;padding:11px 14px;font-size:13px;margin-bottom:14px}
+
+
 

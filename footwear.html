@@ -88,7 +88,10 @@
         ${productMedia(p)}</div>
       <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
       <div class="price">¥${p.price}</div>
-      <button class="btn dark" style="width:100%;padding:11px;font-size:13px;margin-top:10px;justify-content:center" data-add="${p.id}">加入购物袋</button>
+      <div class="card-cta">
+        <button class="btn cart-add" data-add="${p.id}">加入购物袋</button>
+        <button class="btn buy-now" data-buy="${p.id}">立即购买</button>
+      </div>
     </div>`;
   }
   function render(){
@@ -128,10 +131,16 @@
       toast(on ? "已收藏" : "已取消收藏");
       return;
     }
-    const b = e.target.closest("[data-add]"); if(!b) return;
-    const p = PRODUCTS.find(x=>x.id===b.dataset.add); if(!p) return;
-    Cart.add({sku:p.id, title:p.name, price:p.price, size:"均码", svg:productMedia(p), meta:p.desc});
-    toast("已加入购物袋："+p.name);
+    const b = e.target.closest("[data-add]");
+    if(b){
+      const p = PRODUCTS.find(x=>x.id===b.dataset.add); if(!p) return;
+      Cart.add({sku:p.id, title:p.name, price:p.price, size:"均码", svg:productMedia(p), meta:p.desc});
+      toast("已加入购物袋："+p.name);
+      return;
+    }
+    const buy = e.target.closest("[data-buy]"); if(!buy) return;
+    const bp = PRODUCTS.find(x=>x.id===buy.dataset.buy); if(!bp) return;
+    BuyNow.go({sku:bp.id, title:bp.name, price:bp.price, qty:1, size:"均码", svg:productMedia(bp), meta:bp.desc});
   });
 })();
 </script>

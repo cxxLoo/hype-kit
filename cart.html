@@ -12,7 +12,7 @@
 
 <section class="section">
   <div class="container">
-    <h2>我的购物袋</h2>
+    <h2 id="cart-title">我的购物袋</h2>
     <div id="cart-body"></div>
   </div>
 </section>
@@ -51,6 +51,48 @@ mountChrome("");
 
 const $ = (id)=>document.getElementById(id);
 const shipOf = (total)=> (total>=499||total===0?0:20);
+
+/* 立即购买模式：?buynow=1 且 sessionStorage 有直购商品 */
+const isBuyNow = new URLSearchParams(location.search).get("buynow") === "1";
+let buynow = isBuyNow ? BuyNow.get() : null;
+if(buynow && !(buynow.qty>0)) buynow.qty = 1;
+
+function orderItems(){ return buynow ? [buynow] : Cart.all(); }
+function orderTotal(){ return orderItems().reduce((n,x)=>n + x.price*x.qty, 0); }
+
+function renderBuyNow(){
+  $("cart-title").textContent = "确认订单";
+  const it = buynow;
+  const total = it.price*it.qty, ship = shipOf(total);
+  $("cart-body").innerHTML = `<div class="cart-wrap">
+    <div>
+      <div class="buynow-tip">⚡ 立即购买 · 此订单独立结算，不影响你的购物袋</div>
+      <div class="cart-item">
+        <div class="ci-thumb">${it.svg||""}</div>
+        <div class="ci-info">
+          <h4>${escapeHtml(it.title)}</h4>
+          <div class="m">${escapeHtml(it.meta||"")}${it.size?(" · 尺码 "+escapeHtml(it.size)):""}</div>
+          <div class="qty" id="bn-qty"><button data-op="-">−</button><span>${it.qty}</span><button data-op="+">+</button></div>
+        </div>
+        <div class="ci-right"><div style="font-weight:600">¥${it.price*it.qty}</div></div>
+      </div>
+    </div>
+    <div class="summary">
+      <h3>订单摘要</h3>
+      <div class="sum-row"><span>商品小计</span><span>¥${total}</span></div>
+      <div class="sum-row"><span>配送费</span><span>${ship?"¥"+ship:"免运费"}</span></div>
+      <div class="sum-row total"><span>合计</span><span>¥${total+ship}</span></div>
+      <button class="btn dark block" style="margin-top:18px" id="bn-checkout">提交订单</button>
+      <a class="btn block" style="margin-top:10px;border:1px solid #e5e5e5" href="clothing.html">继续购物</a>
+    </div></div>`;
+  $("bn-qty").addEventListener("click", e=>{
+    const op = e.target.dataset.op; if(!op) return;
+    buynow.qty = Math.max(1, buynow.qty + (op==="+"?1:-1));
+    BuyNow.set(buynow); renderBuyNow();
+    if($("checkout-mask").classList.contains("show")) refreshSummary();
+  });
+  $("bn-checkout").addEventListener("click", openCheckout);
+}
 
 function render(){
   const list = Cart.all();
@@ -136,12 +178,15 @@ function renderCoAddrs(){
     renderCoAddrs();
   }));
 }
-async function openCheckout(){
-  const total = Cart.total(), ship = shipOf(total);
+function refreshSummary(){
+  const total = orderTotal(), ship = shipOf(total);
   $("co-summary").innerHTML =
     `<div class="sum-row"><span>商品小计</span><span>¥${total}</span></div>
      <div class="sum-row"><span>配送费</span><span>${ship?"¥"+ship:"免运费"}</span></div>
      <div class="sum-row total"><span>应付合计</span><span>¥${total+ship}</span></div>`;
+}
+async function openCheckout(){
+  refreshSummary();
   $("co-err").textContent = "";
   await loadCoAddrs();
   coSelected = coAddrs.length ? (coAddrs.find(a=>a.is_default)||coAddrs[0]).id : null;
@@ -153,7 +198,7 @@ $("checkout-mask").addEventListener("click", e=>{ if(e.target.id==="checkout-mas
 
 $("checkout-form").addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const list = Cart.all();
+  const list = orderItems();
   if(!list.length){ $("checkout-mask").classList.remove("show"); return; }
   // 取收货信息：选中已存地址 或 手动输入
   let name, phone, address;
@@ -168,7 +213,7 @@ $("checkout-form").addEventListener("submit", async (e)=>{
   const btn = $("co-submit"); btn.disabled = true; btn.textContent = "提交中…";
   $("co-err").textContent = "";
   try{
-    const total = Cart.total(), ship = shipOf(total);
+    const total = orderTotal(), ship = shipOf(total);
     const items = list.map(it=>({ title:it.title, price:it.price, qty:it.qty, size:it.size||"", meta:it.meta||"", svg:it.svg||"" }));
     const { data, error } = await sb.rpc("place_order", {
       p_name:name, p_phone:phone, p_address:address,
@@ -177,7 +222,8 @@ $("checkout-form").addEventListener("submit", async (e)=>{
     if(error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     MyOrders.add(row.token);      // 记住本机订单凭证
-    Cart.save([]);                // 清空购物袋
+    if(buynow){ BuyNow.clear(); } // 立即购买：不动购物袋
+    else{ Cart.save([]); }        // 普通结算：清空购物袋
     location.href = "orders.html?new=" + encodeURIComponent(row.order_no);
   }catch(err){
     $("co-err").textContent = "下单失败：" + (err.message || err);
@@ -185,7 +231,8 @@ $("checkout-form").addEventListener("submit", async (e)=>{
   }
 });
 
-render();
+if(buynow){ renderBuyNow(); openCheckout(); }
+else{ render(); }
 })();
 </script>
 </body>

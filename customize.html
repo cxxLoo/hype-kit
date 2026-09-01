@@ -89,8 +89,9 @@
           </div>
         </div>
 
-        <div style="display:flex;gap:12px;margin-top:12px">
+        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
           <button class="btn dark block" id="add-cart">加入购物袋</button>
+          <button class="btn buy-now block" id="buy-now">立即购买</button>
           <button class="btn" style="border:1px solid #e5e5e5" id="rand">随机配色</button>
         </div>
       </div>
@@ -238,18 +239,24 @@ document.getElementById("rand").addEventListener("click",()=>{
   paintSwatches(); render();
 });
 
-// 加入购物袋
-document.getElementById("add-cart").addEventListener("click",()=>{
+// 加入购物袋 / 立即购买
+function buildCustomItem(){
   if(mode==="outfit"){
-    Cart.add({sku:"custom-outfit", title:"定制牛仔穿搭 · "+FIT_NAME[O.fit],
+    return {sku:"custom-outfit", title:"定制牛仔穿搭 · "+FIT_NAME[O.fit],
       price:PRICE.outfit, size:O.size, svg:denimSVG(O),
-      meta:`${FIT_NAME[O.fit]} · ${DIS_NAME[O.distress]} · 尺码 ${O.size}`});
-  }else{
-    Cart.add({sku:"custom-acc", title:"定制饰品 · "+HAT_NAME[A.type],
-      price:PRICE.acc, size:A.size, svg:accessorySVG(A),
-      meta:`${HAT_NAME[A.type]} · ${A.size}`});
+      meta:`${FIT_NAME[O.fit]} · ${DIS_NAME[O.distress]} · 尺码 ${O.size}`};
   }
+  return {sku:"custom-acc", title:"定制饰品 · "+HAT_NAME[A.type],
+    price:PRICE.acc, size:A.size, svg:accessorySVG(A),
+    meta:`${HAT_NAME[A.type]} · ${A.size}`};
+}
+document.getElementById("add-cart").addEventListener("click",()=>{
+  Cart.add(buildCustomItem());
   toast("定制款已加入购物袋!");
+});
+document.getElementById("buy-now").addEventListener("click",()=>{
+  const it = buildCustomItem(); it.qty = 1;
+  BuyNow.go(it);
 });
 
 /* ================= AI 试穿 ================= */

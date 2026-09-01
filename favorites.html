@@ -66,7 +66,10 @@
           ${productMedia(p)}</div>
         <h4>${escapeHtml(p.name)}</h4><div class="desc">${escapeHtml(p.desc)}</div>
         <div class="price">¥${p.price}</div>
-        <button class="btn dark" style="width:100%;padding:11px;font-size:13px;margin-top:10px;justify-content:center" data-add="${p.id}">加入购物袋</button>
+        <div class="card-cta">
+          <button class="btn cart-add" data-add="${p.id}">加入购物袋</button>
+          <button class="btn buy-now" data-buy="${p.id}">立即购买</button>
+        </div>
       </div>`;}).join("");
   }
 
@@ -126,6 +129,14 @@
       const size = p.cat==="jersey"?"L":p.cat==="shoe"?"42":p.cat==="footwear"?"均码":"M";
       Cart.add({sku:p.id,title:p.name,price:p.price,size,svg:productMedia(p),meta:p.desc});
       toast("已加入购物袋："+p.name);
+      return;
+    }
+    const buy = e.target.closest("[data-buy]");
+    if(buy){
+      const p = PRODUCTS.find(x=>x.id===buy.dataset.buy); if(!p) return;
+      const size = p.cat==="jersey"?"L":p.cat==="shoe"?"42":p.cat==="footwear"?"均码":"M";
+      BuyNow.go({sku:p.id,title:p.name,price:p.price,qty:1,size,svg:productMedia(p),meta:p.desc});
+      return;
     }
   });
 

@@ -347,6 +347,20 @@
   }
   window.updateCartBadge = updateBadge;
 
+  /* ---------- 立即购买（不经过购物袋，单件直购） ---------- */
+  window.BuyNow = {
+    KEY: "hk_buynow",
+    set(item){ try{ sessionStorage.setItem(this.KEY, JSON.stringify(item)); }catch(e){} },
+    get(){ try{ return JSON.parse(sessionStorage.getItem(this.KEY)); }catch(e){ return null; } },
+    clear(){ try{ sessionStorage.removeItem(this.KEY); }catch(e){} },
+    go(item){
+      if(!item) return;
+      item.qty = item.qty || 1;
+      this.set(item);
+      location.href = "cart.html?buynow=1";
+    }
+  };
+
   /* ---------- 收藏（商品 + 帖子） ---------- */
   window.Favs = {
     KEYS: FAV_KEYS,
