@@ -71,10 +71,11 @@
     $("stat-shoe").textContent   = list.filter(x=>x.cat==="footwear").length;
     if(!list.length){ box.innerHTML = `<div class="empty-state">还没有商品，点击右上角「+ 新增商品」。</div>`; return; }
     box.innerHTML = `<table><thead><tr>
-      <th>商品</th><th>ID</th><th>分类</th><th>价格</th><th>标签</th><th>操作</th>
+      <th>商品</th><th>ID</th><th>分类</th><th>价格</th><th>标签</th><th>状态</th><th>操作</th>
     </tr></thead><tbody>${list.map(rowHtml).join("")}</tbody></table>`;
     box.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openEdit(list.find(x=>x.id===b.dataset.edit))));
     box.querySelectorAll("[data-video]").forEach(b=>b.addEventListener("click",()=>openVideo(list.find(x=>x.id===b.dataset.video))));
+    box.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>toggleActive(b.dataset.toggle, b.dataset.next==="1")));
     box.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>delProduct(b.dataset.del)));
   }
 
@@ -89,7 +90,11 @@
     const catPill = CAT_PILL[r.cat] || `<span class="pill cat">${escapeHtml(r.cat||"")}</span>`;
     const tagPill = r.tag ? `<span class="pill tag">${escapeHtml(r.tag)}</span>` : `<span style="color:#c3c8d2">—</span>`;
     const hasVideo = r.opts && r.opts.video;
-    return `<tr>
+    const active = r.is_active !== false;
+    const statusPill = active
+      ? '<span class="pill on-shelf">已上架</span>'
+      : '<span class="pill off-shelf">已下架</span>';
+    return `<tr class="${active?"":"row-off"}">
       <td><div style="display:flex;align-items:center;gap:12px">
         <div class="thumb">${productMedia(p)}</div>
         <span class="pname">${escapeHtml(r.name||"")}</span>
@@ -98,12 +103,21 @@
       <td>${catPill}</td>
       <td><span class="price">¥${r.price}</span></td>
       <td>${tagPill}</td>
+      <td>${statusPill}</td>
       <td><div class="row-actions">
         <button class="btn ghost sm ${hasVideo?"has-video":""}" data-video="${escapeHtml(r.id)}">${hasVideo?"视频✓":"视频"}</button>
         <button class="btn ghost sm" data-edit="${escapeHtml(r.id)}">编辑</button>
+        <button class="btn sm ${active?"warn":"brand"}" data-toggle="${escapeHtml(r.id)}" data-next="${active?"0":"1"}">${active?"下架":"上架"}</button>
         <button class="btn danger sm" data-del="${escapeHtml(r.id)}">删除</button>
       </div></td>
     </tr>`;
+  }
+
+  async function toggleActive(id, next){
+    const { error } = await sb.from("products").update({ is_active: next }).eq("id", id);
+    if(error){ toast("操作失败：" + error.message); return; }
+    toast(next ? "已上架，前台立即可见" : "已下架，前台已隐藏");
+    loadProductList();
   }
 
   async function delProduct(id){

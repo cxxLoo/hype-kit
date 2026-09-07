@@ -139,8 +139,10 @@ window.loadProducts = async function(){
     const { data, error } = await window.sb
       .from("products").select("*").order("sort", { ascending: true });
     if(error) throw error;
-    window.PRODUCTS = (data && data.length) ? data.map(rowToProduct) : window.FALLBACK_PRODUCTS.slice();
-    if(data && data.length) writeCache({ products: window.PRODUCTS });
+    // 只展示已上架商品（is_active 缺省视为上架，兼容未加该列的旧库）
+    const rows = (data || []).filter(r => r.is_active !== false);
+    window.PRODUCTS = rows.length ? rows.map(rowToProduct) : window.FALLBACK_PRODUCTS.slice();
+    if(rows.length) writeCache({ products: window.PRODUCTS });
   }catch(e){
     console.warn("[data] 商品加载失败，使用本地示例：", e.message);
     if(!window.PRODUCTS.length) window.PRODUCTS = window.FALLBACK_PRODUCTS.slice();

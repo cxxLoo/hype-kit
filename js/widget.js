@@ -34,6 +34,13 @@
     <rect x="52" y="27" width="6" height="12" rx="3" fill="#dfe7f5"/>
   </svg>`;
 
+  // 客服吉祥物图标：把「图二」保存为 img/cs-mascot.png 即自动生效；加载失败自动回退到内置 SVG
+  window.__hkwRobot = ROBOT;
+  const CS_ICON = "img/cs-mascot.png";
+  function iconImg(cls){
+    return `<img class="${cls}" src="${CS_ICON}" alt="智能客服" onerror="this.outerHTML=window.__hkwRobot">`;
+  }
+
   const style = document.createElement("style");
   style.textContent = `
   .hkw-fab{position:fixed;right:22px;bottom:22px;z-index:1300;width:64px;height:64px;border-radius:50%;
@@ -41,6 +48,8 @@
     display:flex;align-items:center;justify-content:center;animation:hkw-bob 2.6s ease-in-out infinite;transition:transform .18s}
   .hkw-fab:hover{transform:scale(1.08)}
   .hkw-fab svg{width:42px;height:42px}
+  .hkw-fab .hkw-fab-img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+  .hkw-head .av .hkw-av-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
   .hkw-fab::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(63,111,176,.5);
     animation:hkw-ring 2.2s ease-out infinite}
   .hkw-eye{animation:hkw-blink 3.4s infinite}
@@ -103,7 +112,7 @@
     fab.className = "hkw-fab";
     fab.type = "button";
     fab.setAttribute("aria-label","智能客服");
-    fab.innerHTML = ROBOT + `<span class="hkw-dot"></span>`;
+    fab.innerHTML = iconImg("hkw-fab-img") + `<span class="hkw-dot"></span>`;
 
     const tip = document.createElement("div");
     tip.className = "hkw-tip";
@@ -113,7 +122,7 @@
     panel.className = "hkw-panel";
     panel.innerHTML = `
       <div class="hkw-head">
-        <span class="av">${ROBOT}</span>
+        <span class="av">${iconImg("hkw-av-img")}</span>
         <div class="info"><b>HYPE 智能客服</b><span><i></i> 在线 · 秒回</span></div>
         <button class="x" type="button" aria-label="关闭">&times;</button>
       </div>

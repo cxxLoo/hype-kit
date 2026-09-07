@@ -315,30 +315,25 @@
      球衣/球鞋（保留供定制）无图片时用 SVG 生成图 */
   window.productMedia = function(p){
     if(p && p.image_url){
-      const seed = encodeURIComponent((p && p.id) || "hk");
-      const fb = "https://picsum.photos/seed/" + seed + "/500/620";
-      return `<img class="pm-img" src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name||"")}" loading="lazy" decoding="async" data-fb="${fb}" onload="this.classList.add('is-loaded')" onerror="window.__imgFallback&&window.__imgFallback(this)">`;
+      return `<img class="pm-img" src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name||"")}" loading="lazy" decoding="async" onload="this.classList.add('is-loaded')" onerror="window.__imgFallback&&window.__imgFallback(this)">`;
     }
     return p && p.cat === "shoe" ? shoeSVG(p.opts) : jerseySVG(p ? p.opts : {});
   };
 
-  /* ---------- 图片守护：慢/失败自动降级，避免「几分钟白图」 ---------- */
+  /* ---------- 图片守护：仅在真正加载失败时降级为中性占位，绝不替换成随机图片 ---------- */
   window.__imgFallback = function(img){
-    const tries = +(img.dataset.fbtry || 0);
-    if(tries >= 1){ img.classList.add("is-loaded","is-error"); return; }  // 二次失败：停手，显示占位底
-    img.dataset.fbtry = tries + 1;
-    const fb = img.dataset.fb;
-    if(fb){ img.src = fb; } else { img.classList.add("is-loaded","is-error"); }
+    if(img.dataset.hkerr) return; img.dataset.hkerr = "1";
+    img.src = "data:image/svg+xml;utf8," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="250"><rect width="100%" height="100%" fill="#f0f0f0"/><text x="50%" y="52%" fill="#c2c2c2" font-family="sans-serif" font-size="13" text-anchor="middle">图片加载失败</text></svg>');
+    img.classList.add("is-loaded","is-error");
   };
   (function watchImages(){
-    const TIMEOUT = 6000;
     function arm(img){
       if(img.dataset.hkw) return; img.dataset.hkw = "1";
       if(img.complete && img.naturalWidth > 0){ img.classList.add("is-loaded"); return; }
-      const t = setTimeout(()=>{
-        if(!(img.complete && img.naturalWidth > 0)) window.__imgFallback(img);  // 超时未加载 → 降级
-      }, TIMEOUT);
-      img.addEventListener("load", ()=>{ clearTimeout(t); img.classList.add("is-loaded"); }, { once:true });
+      // 慢加载不再超时替换：骨架屏一直显示到真正加载完，避免出现「不明图片」
+      img.addEventListener("load", ()=> img.classList.add("is-loaded"), { once:true });
+      img.addEventListener("error", ()=> window.__imgFallback(img), { once:true });
     }
     function scan(root){ (root.querySelectorAll ? root.querySelectorAll("img.pm-img") : []).forEach(arm); }
     const start = ()=>{
