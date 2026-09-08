@@ -182,7 +182,7 @@
   /* 加权匹配：命中的关键词越长越精准，避免「鞋」这类单字误判 */
   function match(list, t){
     let best = null, bestScore = 0;
-    for(const item of list){
+    for(const item of (list || [])){
       if(!item || !item.kw || !item.a) continue;
       let score = 0;
       for(const k of item.kw){
@@ -191,7 +191,16 @@
       }
       if(score > bestScore){ bestScore = score; best = item; }
     }
-    return bestScore > 0 ? best : null;
+    return { item: bestScore > 0 ? best : null, score: bestScore };
+  }
+
+  /* 温情化：后台配置的官方口吻答案，自动补上「宝」的称呼与关心结尾 */
+  function warmify(s){
+    let t = String(s==null?"":s).trim();
+    if(!t) return "";
+    if(!/^宝/.test(t)) t = "宝，" + t;
+    if(t.indexOf(NAME) < 0) t += "\n还有别的问题随时喊"+NAME+"，我一直都在～";
+    return t;
   }
 
   function timeHello(){
@@ -231,12 +240,14 @@
           };
         }
 
-        const hit = match(DB_KB && DB_KB.length ? DB_KB : [], t) || match(KB, t);
-        if(hit){
-          lastTopic = String(text).trim().slice(0, 12);
-          return { text: hit.a, category: hit.cat || "咨询" };
-        }
+        // 内置温情话术与后台知识库同时打分：后台更精准（分数更高）才采用，
+        // 平手时优先内置，保证「多多噜噜」的温情口吻不被旧的官方答案覆盖
+        const b = match(KB, t);
+        const d = match(DB_KB, t);
         lastTopic = String(text).trim().slice(0, 12);
+        if(d.item && d.score > b.score) return { text: warmify(d.item.a), category: d.item.cat || "咨询" };
+        if(b.item) return { text: b.item.a, category: b.item.cat || "咨询" };
+        if(d.item) return { text: warmify(d.item.a), category: d.item.cat || "咨询" };
         return { text: FALLBACK, category: detectCategory(text) };
       }catch(e){
         return { text: "宝，"+NAME+"刚刚走神了一下🙈 麻烦您再说一次好吗？我一定认真听～", category:"其他" };

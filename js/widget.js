@@ -109,7 +109,7 @@
   html.senior .hkw-bubble,html.senior .hkw-input input{font-size:16px}
   html.senior .hkw-panel{width:400px;height:560px}
   @media(max-width:480px){
-    .hkw-panel{right:12px;left:12px;width:auto;bottom:90px}
+    .hkw-panel{right:12px;left:12px;width:auto;bottom:84px;height:62vh;height:62dvh;max-height:calc(100dvh - 130px)}
     .hkw-fab{right:16px;bottom:16px}
     .hkw-tip{display:none}
   }`;
