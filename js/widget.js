@@ -14,11 +14,18 @@
 
   // 兜底 Bot（页面未引入 chat.js 时）
   const Bot = window.HypeBot || {
-    greeting(){ return "您好呀，欢迎来到 HYPE KIT～😊 我是您的智能助手，关于商品、尺码、配送、支付、退换货都可以问我。"; },
-    suggestions: ["有哪些尺码？","多久发货？包邮吗？","支持退换货吗？","怎么下单支付？"],
-    answer(t){ return { text:"这个问题我记录下来啦～您也可以到「客服中心」页面留言，我们会尽快回复您😊", category:"咨询" }; },
+    NAME: "多多噜噜",
+    greeting(){ return "宝，您来啦～🧸 这里是多多噜噜，正在快马加鞭为您解决问题！关于商品、尺码、配送、支付、退换货都可以问我哦。请问有什么可以帮助您呀？"; },
+    thinking(){ return "多多噜噜正在快马加鞭为您解决问题…"; },
+    suggestions: ["怎么挑尺码呀？","多久发货？包邮吗？","可以退换货吗？","怎么下单支付？"],
+    answer(t){ return { text:"宝，这个问题我先帮您记下来啦～您也可以到「客服中心」留个言，我们会第一时间回复您😊", category:"咨询" }; },
     loadFAQs(){ return Promise.resolve(); }
   };
+  const BOT_NAME = Bot.NAME || "多多噜噜";
+  function thinkText(){
+    try{ return (Bot.thinking && Bot.thinking()) || (BOT_NAME + "正在快马加鞭为您解决问题…"); }
+    catch(e){ return BOT_NAME + "正在快马加鞭为您解决问题…"; }
+  }
 
   const ROBOT = `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs><linearGradient id="hkw-den" x1="0" y1="0" x2="0" y2="1">
@@ -38,7 +45,7 @@
   window.__hkwRobot = ROBOT;
   const CS_ICON = "img/cs-mascot.png";
   function iconImg(cls){
-    return `<img class="${cls}" src="${CS_ICON}" alt="智能客服" onerror="this.outerHTML=window.__hkwRobot">`;
+    return `<img class="${cls}" src="${CS_ICON}" alt="多多噜噜" onerror="this.outerHTML=window.__hkwRobot">`;
   }
 
   const style = document.createElement("style");
@@ -84,6 +91,9 @@
     box-shadow:0 2px 8px rgba(0,0,0,.05);white-space:pre-wrap;word-break:break-word}
   .hkw-row.me .hkw-bubble{background:#111;color:#fff}
   .hkw-typing{display:flex;gap:4px;padding:13px}
+  .hkw-think{display:block;font-size:12.5px;color:#5d7290;margin-bottom:6px}
+  .hkw-typing-wrap{padding:10px 13px}
+  .hkw-typing-wrap .hkw-typing{padding:0}
   .hkw-typing span{width:7px;height:7px;border-radius:50%;background:#b9c2d0;animation:hkw-ty 1s infinite}
   .hkw-typing span:nth-child(2){animation-delay:.15s}
   .hkw-typing span:nth-child(3){animation-delay:.3s}
@@ -116,20 +126,20 @@
 
     const tip = document.createElement("div");
     tip.className = "hkw-tip";
-    tip.textContent = "有问题？点我问问～";
+    tip.textContent = "宝，有问题点我呀～";
 
     const panel = document.createElement("div");
     panel.className = "hkw-panel";
     panel.innerHTML = `
       <div class="hkw-head">
         <span class="av">${iconImg("hkw-av-img")}</span>
-        <div class="info"><b>HYPE 智能客服</b><span><i></i> 在线 · 秒回</span></div>
+        <div class="info"><b>${esc(BOT_NAME)} · 专属客服</b><span><i></i> 在线 · 秒回</span></div>
         <button class="x" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="hkw-body" id="hkw-body"></div>
       <div class="hkw-quick" id="hkw-quick"></div>
       <form class="hkw-input" id="hkw-form">
-        <input id="hkw-text" autocomplete="off" placeholder="输入您的问题…">
+        <input id="hkw-text" autocomplete="off" placeholder="宝，想问什么都可以…">
         <button type="submit" id="hkw-send">发送</button>
       </form>`;
 
@@ -148,15 +158,18 @@
     function addMsg(text, who){
       const row = document.createElement("div");
       row.className = "hkw-row " + (who==="me" ? "me" : "bot");
-      const mini = who==="me" ? "🙂" : "🤖";
+      const mini = who==="me" ? "🙂" : "🧸";
       row.innerHTML = `<div class="hkw-mini">${mini}</div><div class="hkw-bubble">${esc(text).replace(/\n/g,"<br>")}</div>`;
       body.appendChild(row);
       body.scrollTop = body.scrollHeight;
     }
     function showTyping(){
+      hideTyping();
       const row = document.createElement("div");
       row.className = "hkw-row bot"; row.id = "hkw-typing";
-      row.innerHTML = `<div class="hkw-mini">🤖</div><div class="hkw-bubble hkw-typing"><span></span><span></span><span></span></div>`;
+      row.innerHTML = `<div class="hkw-mini">🧸</div><div class="hkw-bubble hkw-typing-wrap">` +
+        `<span class="hkw-think">${esc(thinkText())}</span>` +
+        `<div class="hkw-typing"><span></span><span></span><span></span></div></div>`;
       body.appendChild(row); body.scrollTop = body.scrollHeight;
     }
     function hideTyping(){ const t = panel.querySelector("#hkw-typing"); if(t) t.remove(); }
@@ -165,21 +178,33 @@
       try{ if(window.sb){ const { error } = await sb.from("feedbacks").insert(row); if(error) console.warn("[widget] 记录失败", error.message); } }catch(e){}
     }
 
+    let busy = false;
     async function handleUser(text){
       text = (text||"").trim();
-      if(!text) return;
-      addMsg(text, "me");
-      input.value = "";
+      if(!text || busy) return;          // 防重入：回车与按钮不会并发
+      busy = true;
       sendBtn.disabled = true;
-      showTyping();
-      let res;
-      try{ res = Bot.answer(text); }catch(e){ res = { text:"抱歉，我这边出了点小状况，请稍后再试～", category:"其他" }; }
-      await new Promise(r=>setTimeout(r, 450 + Math.random()*450));
-      hideTyping();
-      addMsg(res.text, "bot");
-      sendBtn.disabled = false;
-      input.focus();
-      logFeedback({ message:text, reply:res.text, category:res.category||"咨询", source:"chat", session_id:SESSION });
+      try{
+        addMsg(text, "me");
+        input.value = "";
+        showTyping();
+        let res;
+        try{ res = Bot.answer(text); }catch(e){ res = null; }
+        if(!res || !res.text) res = { text:"宝，"+BOT_NAME+"刚刚走神了一下🙈 麻烦您再说一次好吗？我一定认真听～", category:"其他" };
+        await new Promise(r=>setTimeout(r, 450 + Math.random()*450));
+        hideTyping();
+        addMsg(res.text, "bot");
+        logFeedback({ message:text, reply:res.text, category:res.category||"咨询", source:"chat", session_id:SESSION });
+      }catch(e){
+        hideTyping();
+        addMsg("宝，"+BOT_NAME+"这边网络打了个小结🙈 麻烦您再发一次好吗？", "bot");
+      }finally{
+        // 无论如何都恢复可输入状态，永不卡死
+        busy = false;
+        sendBtn.disabled = false;
+        hideTyping();
+        try{ input.focus(); }catch(e){}
+      }
     }
 
     function renderQuick(){
@@ -205,6 +230,10 @@
     fab.addEventListener("click", openPanel);
     panel.querySelector(".x").addEventListener("click", closePanel);
     panel.querySelector("#hkw-form").addEventListener("submit", e=>{ e.preventDefault(); handleUser(input.value); });
+    // 手机端聚焦时把消息区滚到底，避免键盘弹出后输入框被遮挡（看起来「打不了字」）
+    input.addEventListener("focus", ()=>{
+      setTimeout(()=>{ body.scrollTop = body.scrollHeight; }, 260);
+    });
 
     // 首次进入几秒后弹出小气泡吸引点击
     setTimeout(()=>{ if(!panel.classList.contains("show")) tip.classList.add("show"); }, 2600);

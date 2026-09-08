@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>客服中心 · HYPE KIT</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="css/style.css?v=20260907">
+<link rel="stylesheet" href="css/style.css?v=20260909">
 </head>
 <body>
 <div id="nav-slot"></div>
@@ -13,22 +13,22 @@
 <section class="section">
   <div class="container">
     <h2>客服中心</h2>
-    <div class="sub">智能助手 7×24 在线，温柔解答您的每一个问题。也欢迎在右侧留下宝贵反馈。</div>
+    <div class="sub">多多噜噜 7×24 在线，宝的每一个问题都会被认真对待。也欢迎在右侧留下宝贵反馈。</div>
 
     <div class="cs-wrap">
       <!-- 在线客服聊天 -->
       <div class="cs-chat">
         <div class="cs-head">
-          <div class="ava">🎽</div>
+          <div class="ava">🧸</div>
           <div class="info">
-            <b>HYPE 智能客服</b>
-            <span><i class="dot"></i> 在线 · 通常几秒内回复</span>
+            <b>多多噜噜 · 专属客服</b>
+            <span><i class="dot"></i> 在线 · 正在快马加鞭为您服务</span>
           </div>
         </div>
         <div class="cs-body" id="cs-body"></div>
         <div class="cs-quick" id="cs-quick"></div>
         <form class="cs-input" id="cs-input">
-          <input id="cs-text" autocomplete="off" placeholder="请输入您的问题，回车发送…">
+          <input id="cs-text" autocomplete="off" placeholder="宝，想问什么都可以，回车发送…">
           <button class="send" type="submit" id="cs-send">发送</button>
         </form>
       </div>
@@ -69,11 +69,11 @@
 <div id="footer-slot"></div>
 
 <script src="js/vendor/supabase.js"></script>
-<script src="js/config.js?v=20260907"></script>
-<script src="js/data.js?v=20260907"></script>
-<script src="js/shared.js?v=20260907"></script>
-<script src="js/chat.js?v=20260907"></script>
-<script src="js/widget.js?v=20260907"></script>
+<script src="js/config.js?v=20260909"></script>
+<script src="js/data.js?v=20260909"></script>
+<script src="js/shared.js?v=20260909"></script>
+<script src="js/chat.js?v=20260909"></script>
+<script src="js/widget.js?v=20260909"></script>
 <script>
 (async function(){
 await loadContent();
@@ -91,7 +91,7 @@ mountChrome("service");
   function addMsg(text, who){
     const row = document.createElement("div");
     row.className = "cs-row " + (who==="me" ? "me" : "bot");
-    const mini = who==="me" ? "🙂" : "🎽";
+    const mini = who==="me" ? "🙂" : "🧸";
     row.innerHTML =
       `<div class="mini">${mini}</div>
        <div><div class="bubble">${escapeHtml(text).replace(/\n/g,"<br>")}</div>
@@ -100,10 +100,16 @@ mountChrome("service");
     body.scrollTop = body.scrollHeight;
   }
 
+  function thinkText(){
+    try{ return (HypeBot.thinking && HypeBot.thinking()) || "多多噜噜正在快马加鞭为您解决问题…"; }
+    catch(e){ return "多多噜噜正在快马加鞭为您解决问题…"; }
+  }
   function showTyping(){
+    hideTyping();
     const row = document.createElement("div");
     row.className = "cs-row bot"; row.id = "cs-typing";
-    row.innerHTML = `<div class="mini">🎽</div><div class="bubble typing"><span></span><span></span><span></span></div>`;
+    row.innerHTML = `<div class="mini">🧸</div><div><div class="bubble cs-think">${escapeHtml(thinkText())}</div>` +
+      `<div class="bubble typing"><span></span><span></span><span></span></div></div>`;
     body.appendChild(row); body.scrollTop = body.scrollHeight;
   }
   function hideTyping(){ const t=document.getElementById("cs-typing"); if(t) t.remove(); }
@@ -116,21 +122,33 @@ mountChrome("service");
     }catch(e){ console.warn("[feedback] 记录异常：", e.message); }
   }
 
+  let busy = false;
   async function handleUser(text){
     text = (text||"").trim();
-    if(!text) return;
-    addMsg(text, "me");
-    input.value = "";
+    if(!text || busy) return;            // 防重入：回车与按钮不会并发
+    busy = true;
     sendBtn.disabled = true;
-    showTyping();
-    const res = HypeBot.answer(text);
-    // 模拟思考，温柔一点
-    await new Promise(r=>setTimeout(r, 500 + Math.random()*500));
-    hideTyping();
-    addMsg(res.text, "bot");
-    sendBtn.disabled = false;
-    input.focus();
-    logFeedback({ message:text, reply:res.text, category:res.category, source:"chat", session_id:SESSION });
+    try{
+      addMsg(text, "me");
+      input.value = "";
+      showTyping();
+      let res;
+      try{ res = HypeBot.answer(text); }catch(e){ res = null; }
+      if(!res || !res.text) res = { text:"宝，多多噜噜刚刚走神了一下🙈 麻烦您再说一次好吗？我一定认真听～", category:"其他" };
+      await new Promise(r=>setTimeout(r, 500 + Math.random()*500));
+      hideTyping();
+      addMsg(res.text, "bot");
+      logFeedback({ message:text, reply:res.text, category:res.category||"咨询", source:"chat", session_id:SESSION });
+    }catch(e){
+      hideTyping();
+      addMsg("宝，多多噜噜这边网络打了个小结🙈 麻烦您再发一次好吗？", "bot");
+    }finally{
+      // 无论如何都恢复可输入状态，永不卡死
+      busy = false;
+      sendBtn.disabled = false;
+      hideTyping();
+      try{ input.focus(); }catch(e){}
+    }
   }
 
   // 快捷提问

@@ -274,6 +274,8 @@ footer{background:#111;color:#fff;padding:60px 0 30px;margin-top:40px}
 .cs-row.bot .bubble{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
 .cs-row.me .bubble{background:#111;color:#fff;border-bottom-right-radius:4px}
 .cs-time{font-size:11px;color:var(--gray);margin:2px 6px 0}
+.cs-row.bot .bubble.cs-think{background:#f2f6fc;border-color:#dde7f5;color:#5d7290;font-size:12.5px;
+  padding:7px 12px;margin-bottom:5px}
 .typing span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:#bbb;
   animation:csbl 1s infinite ease-in-out}
 .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
